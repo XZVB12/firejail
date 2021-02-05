@@ -41,6 +41,7 @@ nou2f
 novideo
 protocol unix
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 
@@ -56,3 +57,5 @@ dbus-user.own org.gnome.Notes
 dbus-user.talk ca.desrt.dconf
 dbus-user.talk org.freedesktop.Tracker1
 dbus-system none
+
+env WEBKIT_FORCE_SANDBOX=0

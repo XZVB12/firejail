@@ -12,6 +12,9 @@ include globals.local
 noblacklist ${HOME}/.cache/minetest
 noblacklist ${HOME}/.minetest
 
+# Allow lua (blacklisted by disable-interpreters.inc)
+include allow-lua.inc
+
 include disable-common.inc
 include disable-devel.inc
 include disable-exec.inc
@@ -25,6 +28,7 @@ mkdir ${HOME}/.cache/minetest
 mkdir ${HOME}/.minetest
 whitelist ${HOME}/.cache/minetest
 whitelist ${HOME}/.minetest
+whitelist /usr/share/games/minetest
 whitelist /usr/share/minetest
 include whitelist-common.inc
 include whitelist-runuser-common.inc
@@ -43,12 +47,14 @@ nou2f
 novideo
 protocol unix,inet,inet6
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 
 disable-mnt
-private-bin minetest
-private-cache
+private-bin minetest,rm
+# cache is used for storing assets when connecting to servers
+#private-cache
 private-dev
 # private-etc needs to be updated, see #1702
 #private-etc alternatives,asound.conf,ca-certificates,crypto-policies,drirc,fonts,group,host.conf,hostname,hosts,ld.so.cache,ld.so.preload,localtime,machine-id,nsswitch.conf,passwd,pki,pulse,resolv.conf,ssl

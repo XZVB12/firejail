@@ -41,15 +41,17 @@ noroot
 notv
 nou2f
 novideo
-protocol unix,inet,inet6
+protocol unix,inet,inet6,bluetooth
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 
 disable-mnt
 private-bin supertuxkart
 private-cache
-private-dev
+# uncomment the following line if you do not need controller support
+#private-dev
 private-etc alternatives,ca-certificates,crypto-policies,drirc,hosts,machine-id,openal,pki,resolv.conf,ssl
 private-tmp
 private-opt none

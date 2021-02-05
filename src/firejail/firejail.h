@@ -372,7 +372,7 @@ char *guess_shell(void);
 // sandbox.c
 #define SANDBOX_DONE '1'
 int sandbox(void* sandbox_arg);
-void start_application(int no_sandbox, char *set_sandbox_status) __attribute__((noreturn));
+void start_application(int no_sandbox, int fd, char *set_sandbox_status) __attribute__((noreturn));
 void set_apparmor(void);
 
 // network_main.c
@@ -513,7 +513,6 @@ void check_private_dir(void);
 void update_map(char *mapping, char *map_file);
 void wait_for_other(int fd);
 void notify_other(int fd);
-const char *gnu_basename(const char *path);
 uid_t pid_get_uid(pid_t pid);
 uid_t get_group_id(const char *group);
 int remove_overlay_directory(void);

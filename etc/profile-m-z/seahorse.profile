@@ -9,8 +9,9 @@ include globals.local
 blacklist /tmp/.X11-unix
 
 noblacklist ${HOME}/.gnupg
-noblacklist ${HOME}/.ssh
-noblacklist /tmp/ssh-*
+
+# Allow ssh (blacklisted by disable-common.inc)
+include allow-ssh.inc
 
 include disable-common.inc
 include disable-devel.inc
@@ -63,6 +64,7 @@ private-etc ca-certificates,crypto-policies,dconf,fonts,gconf,gtk-2.0,gtk-3.0,ho
 writable-run-user
 
 dbus-user filter
+dbus-user.own org.gnome.seahorse
 dbus-user.own org.gnome.seahorse.Application
 dbus-user.talk org.freedesktop.secrets
 dbus-system none

@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <dirent.h>
 #include <string.h>
+#include <time.h>
 #include "../include/common.h"
 #define BUFLEN 4096
 
@@ -266,7 +267,6 @@ int pid_proc_cmdline_x11_xpra_xephyr(const pid_t pid) {
 }
 
 // return 1 if /proc is mounted hidepid, or if /proc/mouns access is denied
-#define BUFLEN 4096
 int pid_hidepid(void) {
 	FILE *fp = fopen("/proc/mounts", "r");
 	if (!fp)
@@ -277,7 +277,7 @@ int pid_hidepid(void) {
 		if (strstr(buf, "proc /proc proc")) {
 			fclose(fp);
 			// check hidepid
-			if (strstr(buf, "hidepid=2") || strstr(buf, "hidepid=1"))
+			if (strstr(buf, "hidepid="))
 				return 1;
 			return 0;
 		}
@@ -287,41 +287,78 @@ int pid_hidepid(void) {
 	return 0;
 }
 
+// print error if unprivileged users can trace the process
+void warn_dumpable(void) {
+	if (getuid() != 0 && prctl(PR_GET_DUMPABLE, 0, 0, 0, 0) == 1 && getenv("FIREJAIL_PLUGIN")) {
+		fprintf(stderr, "Error: dumpable process\n");
+
+		// best effort to provide detailed debug information
+		// cannot use process name, it is just a file descriptor number
+		char path[BUFLEN];
+		ssize_t len = readlink("/proc/self/exe", path, BUFLEN - 1);
+		if (len < 0)
+			return;
+		path[len] = '\0';
+		// path can refer to a sandbox mount namespace, use basename only
+		const char *base = gnu_basename(path);
+
+		struct stat s;
+		if (stat("/proc/self/exe", &s) == 0 && s.st_uid != 0)
+			fprintf(stderr, "Change owner of %s executable to root\n", base);
+		else if (access("/proc/self/exe", R_OK) == 0)
+			fprintf(stderr, "Remove read permission on %s executable\n", base);
+	}
+}
+
+// Equivalent to the GNU version of basename, which is incompatible with
+// the POSIX basename. A few lines of code saves any portability pain.
+// https://www.gnu.org/software/libc/manual/html_node/Finding-Tokens-in-a-String.html#index-basename
+const char *gnu_basename(const char *path) {
+	const char *last_slash = strrchr(path, '/');
+	if (!last_slash)
+		return path;
+	return last_slash+1;
+}
+
 //**************************
 // time trace based on getticks function
 //**************************
-static int tt_not_implemented = 0; // not implemented for the current architecture
-static unsigned long long tt_1ms = 0;
-static unsigned long long tt = 0;	// start time
+typedef struct list_entry_t {
+	struct list_entry_t *next;
+	struct timespec ts;
+} ListEntry;
+
+static ListEntry *ts_list = NULL;
+
+static inline float msdelta(struct timespec *start, struct timespec *end) {
+	unsigned sec = end->tv_sec - start->tv_sec;
+	long nsec = end->tv_nsec - start->tv_nsec;
+	return (float) sec * 1000 + (float) nsec / 1000000;
+}
 
 void timetrace_start(void) {
-	if (tt_not_implemented)
-		return;
-	unsigned long long t1 = getticks();
-	if (t1 == 0) {
-		tt_not_implemented = 1;
-		return;
-	}
+	ListEntry *t = malloc(sizeof(ListEntry));
+	if (!t)
+		errExit("malloc");
+	memset(t, 0, sizeof(ListEntry));
+	clock_gettime(CLOCK_MONOTONIC, &t->ts);
 
-	if (tt_1ms == 0) {
-		usleep(1000);	// sleep 1 ms
-		unsigned long long t2 = getticks();
-		tt_1ms = t2 - t1;
-		if (tt_1ms == 0) {
-			tt_not_implemented = 1;
-			return;
-		}
-	}
-
-	tt = getticks();
+	// add it to the list
+	t->next = ts_list;
+	ts_list = t;
 }
 
 float timetrace_end(void) {
-	if (tt_not_implemented)
+	if (!ts_list)
 		return 0;
 
-	unsigned long long delta = getticks() - tt;
-	assert(tt_1ms);
+	// remove start time  from the list
+	ListEntry *t = ts_list;
+	ts_list = t->next;
 
-	return (float) delta / (float) tt_1ms;
+	struct timespec end;
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	float rv = msdelta(&t->ts, &end);
+	free(t);
+	return rv;
 }

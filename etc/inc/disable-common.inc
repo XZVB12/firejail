@@ -69,6 +69,7 @@ read-only ${HOME}/.Xauthority
 #?HAS_X11: blacklist /tmp/.ICE-unix
 
 # KDE config
+blacklist ${HOME}/.cache/konsole
 blacklist ${HOME}/.config/khotkeysrc
 blacklist ${HOME}/.config/krunnerrc
 blacklist ${HOME}/.config/kscreenlockerrc
@@ -76,6 +77,7 @@ blacklist ${HOME}/.config/ksslcertificatemanager
 blacklist ${HOME}/.config/kwalletrc
 blacklist ${HOME}/.config/kwinrc
 blacklist ${HOME}/.config/kwinrulesrc
+blacklist ${HOME}/.config/plasma-locale-settings.sh
 blacklist ${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc
 blacklist ${HOME}/.config/plasmashellrc
 blacklist ${HOME}/.config/plasmavaultrc
@@ -106,6 +108,7 @@ blacklist ${HOME}/.local/share/kwin
 blacklist ${HOME}/.local/share/plasma
 blacklist ${HOME}/.local/share/plasmashell
 blacklist ${HOME}/.local/share/solid
+blacklist /tmp/konsole-*.history
 read-only ${HOME}/.cache/ksycoca5_*
 read-only ${HOME}/.config/*notifyrc
 read-only ${HOME}/.config/kdeglobals
@@ -144,6 +147,8 @@ blacklist ${RUNUSER}/kdesud_*
 # gnome
 # contains extensions, last used times of applications, and notifications
 blacklist ${HOME}/.local/share/gnome-shell
+# contains recently used files and serials of static/removable storage
+blacklist ${HOME}/.local/share/gvfs-metadata
 # no direct modification of dconf database
 read-only ${HOME}/.config/dconf
 blacklist ${RUNUSER}/gnome-session-leader-fifo
@@ -263,9 +268,11 @@ read-only ${HOME}/.config/fish
 read-only ${HOME}/.csh_files
 read-only ${HOME}/.cshrc
 read-only ${HOME}/.forward
+read-only ${HOME}/.kshrc
 read-only ${HOME}/.local/share/fish
 read-only ${HOME}/.login
 read-only ${HOME}/.logout
+read-only ${HOME}/.mkshrc
 read-only ${HOME}/.oh-my-zsh
 read-only ${HOME}/.pam_environment
 read-only ${HOME}/.pgpkey
@@ -273,6 +280,7 @@ read-only ${HOME}/.plan
 read-only ${HOME}/.profile
 read-only ${HOME}/.project
 read-only ${HOME}/.tcshrc
+read-only ${HOME}/.zfunc
 read-only ${HOME}/.zlogin
 read-only ${HOME}/.zlogout
 read-only ${HOME}/.zprofile
@@ -283,7 +291,15 @@ read-only ${HOME}/.zshrc
 read-only ${HOME}/.zshrc.local
 
 # Remote access
-read-only ${HOME}/.ssh/authorized_keys
+blacklist ${HOME}/.rhosts
+blacklist ${HOME}/.shosts
+blacklist ${HOME}/.ssh/authorized_keys
+blacklist ${HOME}/.ssh/authorized_keys2
+blacklist ${HOME}/.ssh/environment
+blacklist ${HOME}/.ssh/rc
+blacklist /etc/hosts.equiv
+read-only ${HOME}/.ssh/config
+read-only ${HOME}/.ssh/config.d
 
 # Initialization files that allow arbitrary command execution
 read-only ${HOME}/.caffrc
@@ -295,12 +311,14 @@ read-only ${HOME}/.exrc
 read-only ${HOME}/.gvimrc
 read-only ${HOME}/.homesick
 read-only ${HOME}/.iscreenrc
+read-only ${HOME}/.local/lib
 read-only ${HOME}/.local/share/cool-retro-term
 read-only ${HOME}/.mailcap
 read-only ${HOME}/.msmtprc
 read-only ${HOME}/.mutt/muttrc
 read-only ${HOME}/.muttrc
 read-only ${HOME}/.nano
+read-only ${HOME}/.npmrc
 read-only ${HOME}/.pythonrc.py
 read-only ${HOME}/.reportbugrc
 read-only ${HOME}/.tmux.conf
@@ -309,6 +327,7 @@ read-only ${HOME}/.viminfo
 read-only ${HOME}/.vimrc
 read-only ${HOME}/.xmonad
 read-only ${HOME}/.xscreensaver
+read-only ${HOME}/.yarnrc
 read-only ${HOME}/_exrc
 read-only ${HOME}/_gvimrc
 read-only ${HOME}/_vimrc
@@ -335,6 +354,9 @@ read-only ${HOME}/.local/share/mime
 
 # Write-protection for thumbnailer dir
 read-only ${HOME}/.local/share/thumbnailers
+
+# prevent access to ssh-agent
+blacklist /tmp/ssh-*
 
 # top secret
 blacklist ${HOME}/*.kdb
@@ -382,6 +404,7 @@ blacklist /etc/shadow
 blacklist /etc/shadow+
 blacklist /etc/shadow-
 blacklist /etc/ssh
+blacklist /etc/ssh/*
 blacklist /home/.ecryptfs
 blacklist /home/.fscrypt
 blacklist /var/backup
@@ -480,6 +503,7 @@ blacklist ${RUNUSER}/app
 blacklist ${RUNUSER}/doc
 blacklist ${RUNUSER}/.dbus-proxy
 blacklist ${RUNUSER}/.flatpak
+blacklist ${RUNUSER}/.flatpak-cache
 blacklist ${RUNUSER}/.flatpak-helper
 blacklist /usr/share/flatpak
 noblacklist /var/lib/flatpak/exports
@@ -505,18 +529,24 @@ blacklist /proc/config.gz
 # prevent DNS malware attempting to communicate with the server
 # using regular DNS tools
 blacklist ${PATH}/dig
-blacklist ${PATH}/kdig
-blacklist ${PATH}/nslookup
-blacklist ${PATH}/host
 blacklist ${PATH}/dlint
-blacklist ${PATH}/dnswalk
 blacklist ${PATH}/dns2tcp
+blacklist ${PATH}/dnssec-*
+blacklist ${PATH}/dnswalk
+blacklist ${PATH}/drill
+blacklist ${PATH}/host
 blacklist ${PATH}/iodine
+blacklist ${PATH}/kdig
+blacklist ${PATH}/khost
 blacklist ${PATH}/knsupdate
+blacklist ${PATH}/ldns-*
+blacklist ${PATH}/ldnsd
+blacklist ${PATH}/nslookup
 blacklist ${PATH}/resolvectl
+blacklist ${PATH}/unbound-host
 
 # rest of ${RUNUSER}
 blacklist ${RUNUSER}/*.lock
 blacklist ${RUNUSER}/inaccessible
-blacklist ${RUNUSER}/update-notifier.pid
 blacklist ${RUNUSER}/pk-debconf-socket
+blacklist ${RUNUSER}/update-notifier.pid

@@ -7,16 +7,18 @@ include element-desktop.local
 # added by included profile
 #include globals.local
 
+ignore dbus-user none
+
 noblacklist ${HOME}/.config/Element
-noblacklist ${HOME}/.config/Element (Riot)
 
 mkdir ${HOME}/.config/Element
-mkdir ${HOME}/.config/Element (Riot)
 whitelist ${HOME}/.config/Element
-whitelist ${HOME}/.config/Element (Riot)
 whitelist /opt/Element
 
 private-opt Element
+
+dbus-user filter
+dbus-user.talk org.freedesktop.secrets
 
 # Redirect
 include riot-desktop.profile

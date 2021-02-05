@@ -9,6 +9,7 @@ include globals.local
 noblacklist ${HOME}/.killingfloor
 noblacklist ${HOME}/.local/share/3909/PapersPlease
 noblacklist ${HOME}/.local/share/aspyr-media
+noblacklist ${HOME}/.local/share/bohemiainteractive
 noblacklist ${HOME}/.local/share/cdprojektred
 noblacklist ${HOME}/.local/share/FasterThanLight
 noblacklist ${HOME}/.local/share/feral-interactive
@@ -45,6 +46,7 @@ mkdir ${HOME}/.config/unity3d
 mkdir ${HOME}/.killingfloor
 mkdir ${HOME}/.local/share/3909/PapersPlease
 mkdir ${HOME}/.local/share/aspyr-media
+mkdir ${HOME}/.local/share/bohemiainteractive
 mkdir ${HOME}/.local/share/cdprojektred
 mkdir ${HOME}/.local/share/FasterThanLight
 mkdir ${HOME}/.local/share/feral-interactive
@@ -64,6 +66,7 @@ whitelist ${HOME}/.config/unity3d
 whitelist ${HOME}/.killingfloor
 whitelist ${HOME}/.local/share/3909/PapersPlease
 whitelist ${HOME}/.local/share/aspyr-media
+whitelist ${HOME}/.local/share/bohemiainteractive
 whitelist ${HOME}/.local/share/cdprojektred
 whitelist ${HOME}/.local/share/FasterThanLight
 whitelist ${HOME}/.local/share/feral-interactive
@@ -109,10 +112,10 @@ shell none
 # picture viewers are needed for viewing screenshots
 #private-bin eog,eom,gthumb,pix,viewnior,xviewer
 
-# private-dev should be commented for controllers
+# comment the following line if you need controller support
 private-dev
 # private-etc breaks a small selection of games on some systems, comment to support those
-private-etc alternatives,asound.conf,bumblebee,ca-certificates,crypto-policies,dbus-1,drirc,fonts,group,gtk-2.0,gtk-3.0,host.conf,hostname,hosts,ld.so.cache,ld.so.conf,ld.so.conf.d,ld.so.preload,localtime,lsb-release,machine-id,mime.types,nvidia,os-release,passwd,pki,pulse,resolv.conf,services,ssl
+private-etc alsa,alternatives,asound.conf,bumblebee,ca-certificates,crypto-policies,dbus-1,drirc,fonts,group,gtk-2.0,gtk-3.0,host.conf,hostname,hosts,ld.so.cache,ld.so.conf,ld.so.conf.d,ld.so.preload,localtime,lsb-release,machine-id,mime.types,nvidia,os-release,passwd,pki,pulse,resolv.conf,services,ssl
 private-tmp
 
 # breaks appindicator support

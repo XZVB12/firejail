@@ -161,7 +161,6 @@ int fullargc = 0;
 static pid_t child = 0;
 pid_t sandbox_pid;
 mode_t orig_umask = 022;
-unsigned long long start_timestamp;
 
 static void clear_atexit(void) {
 	EUID_ROOT();
@@ -868,7 +867,8 @@ char *guess_shell(void) {
 	shell = getenv("SHELL");
 	if (shell) {
 		invalid_filename(shell, 0); // no globbing
-		if (!is_dir(shell) && strstr(shell, "..") == NULL && stat(shell, &s) == 0 && access(shell, X_OK) == 0)
+		if (!is_dir(shell) && strstr(shell, "..") == NULL && stat(shell, &s) == 0 && access(shell, X_OK) == 0 &&
+		    strcmp(shell, PATH_FIREJAIL) != 0)
 			return shell;
 	}
 
@@ -1026,7 +1026,7 @@ int main(int argc, char **argv, char **envp) {
 	init_cfg(argc, argv);
 
 	// get starting timestamp, process --quiet
-	start_timestamp = getticks();
+	timetrace_start();
 	char *env_quiet = getenv("FIREJAIL_QUIET");
 	if (check_arg(argc, argv, "--quiet", 1) || (env_quiet && strcmp(env_quiet, "yes") == 0))
 		arg_quiet = 1;
@@ -1231,11 +1231,6 @@ int main(int argc, char **argv, char **envp) {
 	}
 	EUID_ASSERT();
 
-#ifdef WARN_DUMPABLE
-	if (prctl(PR_GET_DUMPABLE, 0, 0, 0, 0) == 1 && getuid())
-		fprintf(stderr, "Error: Firejail is dumpable\n");
-#endif
-
 	// check for force-nonewprivs in /etc/firejail/firejail.config file
 	if (checkcfg(CFG_FORCE_NONEWPRIVS))
 		arg_nonewprivs = 1;
@@ -1283,7 +1278,7 @@ int main(int argc, char **argv, char **envp) {
 		else if (strncmp(argv[i], "--protocol=", 11) == 0) {
 			if (checkcfg(CFG_SECCOMP)) {
 				if (cfg.protocol) {
-					fwarning("two protocol lists are present, \"%s\" will be installed\n", cfg.protocol);
+					fwarning("more than one protocol list is present, \"%s\" will be installed\n", cfg.protocol);
 				}
 				else {
 					// store list
@@ -2000,12 +1995,14 @@ int main(int argc, char **argv, char **envp) {
 		else if (strcmp(argv[i], "--private-tmp") == 0) {
 			arg_private_tmp = 1;
 		}
+#ifdef HAVE_USERTMPFS
 		else if (strcmp(argv[i], "--private-cache") == 0) {
 			if (checkcfg(CFG_PRIVATE_CACHE))
 				arg_private_cache = 1;
 			else
 				exit_err_feature("private-cache");
 		}
+#endif
 		else if (strcmp(argv[i], "--private-cwd") == 0) {
 			cfg.cwd = NULL;
 			arg_private_cwd = 1;
@@ -2396,6 +2393,13 @@ int main(int argc, char **argv, char **envp) {
 					fprintf(stderr, "Error: invalid MAC address\n");
 					exit(1);
 				}
+
+				// check multicast address
+				if (br->macsandbox[0] & 1) {
+					fprintf(stderr, "Error: invalid MAC address (multicast)\n");
+					exit(1);
+				}
+
 			}
 			else
 				exit_err_feature("networking");
@@ -2778,7 +2782,7 @@ int main(int argc, char **argv, char **envp) {
 
 	// build the sandbox command
 	if (prog_index == -1 && cfg.shell) {
-		cfg.command_line = cfg.shell;
+		assert(cfg.command_line == NULL); // runs cfg.shell
 		cfg.window_title = cfg.shell;
 		cfg.command_name = cfg.shell;
 	}
@@ -3021,8 +3025,15 @@ int main(int argc, char **argv, char **envp) {
 	 	ptr += strlen(ptr);
 
 	 	if (!arg_nogroups) {
+		 	//  add firejail group
+		 	gid_t g = get_group_id("firejail");
+		 	if (g) {
+		 		sprintf(ptr, "%d %d 1\n", g, g);
+		 		ptr += strlen(ptr);
+		 	}
+
 		 	//  add tty group
-		 	gid_t g = get_group_id("tty");
+		 	g = get_group_id("tty");
 		 	if (g) {
 		 		sprintf(ptr, "%d %d 1\n", g, g);
 		 		ptr += strlen(ptr);

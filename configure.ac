@@ -12,7 +12,7 @@
 #
 
 AC_PREREQ([2.68])
-AC_INIT(firejail, 0.9.64rc2, netblue30@protonmail.com, , https://firejail.wordpress.com)
+AC_INIT(firejail, 0.9.65, netblue30@protonmail.com, , https://firejail.wordpress.com)
 AC_CONFIG_SRCDIR([src/firejail/main.c])
 
 AC_CONFIG_MACRO_DIR([m4])
@@ -72,6 +72,14 @@ AC_ARG_ENABLE([overlayfs],
 AS_IF([test "x$enable_overlayfs" != "xno"], [
 	HAVE_OVERLAYFS="-DHAVE_OVERLAYFS"
 	AC_SUBST(HAVE_OVERLAYFS)
+])
+
+HAVE_USERTMPS=""
+AC_ARG_ENABLE([usertmpfs],
+    AS_HELP_STRING([--disable-usertmpfs], [disable tmpfs as regular user]))
+AS_IF([test "x$enable_usertmpfs" != "xno"], [
+	HAVE_USERTMPFS="-DHAVE_USERTMPFS"
+	AC_SUBST(HAVE_USERTMPFS)
 ])
 
 HAVE_MAN="no"
@@ -223,7 +231,7 @@ AC_CONFIG_FILES([mkdeb.sh], [chmod +x mkdeb.sh])
 AC_OUTPUT(Makefile src/common.mk src/lib/Makefile src/fcopy/Makefile src/fnet/Makefile src/firejail/Makefile src/fnetfilter/Makefile \
 src/firemon/Makefile src/libtrace/Makefile src/libtracelog/Makefile src/firecfg/Makefile src/fbuilder/Makefile src/fsec-print/Makefile \
 src/ftee/Makefile src/faudit/Makefile src/fseccomp/Makefile src/fldd/Makefile src/libpostexecseccomp/Makefile src/fsec-optimize/Makefile \
-src/profstats/Makefile src/man/Makefile)
+src/profstats/Makefile src/man/Makefile test/Makefile)
 
 echo
 echo "Configuration options:"
@@ -240,6 +248,7 @@ echo "   private home support: $HAVE_PRIVATE_HOME"
 echo "   file transfer support: $HAVE_FILE_TRANSFER"
 echo "   overlayfs support: $HAVE_OVERLAYFS"
 echo "   DBUS proxy support: $HAVE_DBUSPROXY"
+echo "   allow tmpfs as regular user: $HAVE_USERTMPFS"
 echo "   Manpage support: $HAVE_MAN"
 echo "   firetunnel support: $HAVE_FIRETUNNEL"
 echo "   busybox workaround: $BUSYBOX_WORKAROUND"

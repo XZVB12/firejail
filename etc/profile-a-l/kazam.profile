@@ -12,12 +12,13 @@ noblacklist ${PICTURES}
 noblacklist ${VIDEOS}
 noblacklist ${HOME}/.config/kazam
 
-include allow-python2.inc 
-include allow-python3.inc 
+# Allow python (blacklisted by disable-interpreters.inc)
+include allow-python2.inc
+include allow-python3.inc
 
 include disable-common.inc
 include disable-devel.inc
-include disable-exec.inc 
+include disable-exec.inc
 include disable-interpreters.inc
 include disable-programs.inc
 include disable-passwdmgr.inc
@@ -25,7 +26,7 @@ include disable-shell.inc
 include disable-xdg.inc
 
 whitelist /usr/share/kazam
-include whitelist-runuser-common.inc 
+include whitelist-runuser-common.inc
 include whitelist-usr-share-common.inc
 include whitelist-var-common.inc
 

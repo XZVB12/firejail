@@ -6,12 +6,13 @@ include menulibre.local
 # Persistent global definitions
 include globals.local
 
+# Allow python (blacklisted by disable-interpreters.inc)
 include allow-python2.inc
 include allow-python3.inc
 
 include disable-common.inc
 include disable-devel.inc
-include disable-exec.inc 
+include disable-exec.inc
 include disable-interpreters.inc
 include disable-programs.inc
 include disable-passwdmgr.inc
@@ -25,7 +26,7 @@ whitelist /usr/share/menulibre
 whitelist /var/lib/app-info/icons
 whitelist /var/lib/flatpak/exports/share/applications
 whitelist /var/lib/flatpak/exports/share/icons
-include whitelist-runuser-common.inc 
+include whitelist-runuser-common.inc
 include whitelist-usr-share-common.inc
 include whitelist-var-common.inc
 
@@ -44,6 +45,7 @@ nou2f
 novideo
 protocol unix
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 

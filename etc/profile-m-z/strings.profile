@@ -7,7 +7,6 @@ include strings.local
 # Persistent global definitions
 include globals.local
 
-blacklist ${RUNUSER}/wayland-*
 blacklist ${RUNUSER}
 
 #include disable-common.inc
@@ -38,6 +37,7 @@ nou2f
 novideo
 protocol unix
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 x11 none

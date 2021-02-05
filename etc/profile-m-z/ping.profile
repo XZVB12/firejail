@@ -8,7 +8,6 @@ include ping.local
 include globals.local
 
 blacklist /tmp/.X11-unix
-blacklist ${RUNUSER}/wayland-*
 blacklist ${RUNUSER}
 
 include disable-common.inc
@@ -54,3 +53,6 @@ private-tmp
 
 # memory-deny-write-execute is built using seccomp; nonewprivs will kill it
 #memory-deny-write-execute
+
+dbus-user none
+dbus-system none

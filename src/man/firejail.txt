@@ -76,10 +76,10 @@ If an appropriate profile is not found, Firejail will use a default profile.
 The default profile is quite restrictive. In case the application doesn't work, use --noprofile option
 to disable it. For more information, please see \fBSECURITY PROFILES\fR section below.
 .PP
-If a program argument is not specified, Firejail starts /bin/bash shell.
+If a program argument is not specified, Firejail starts the user's preferred shell.
 Examples:
 .PP
-$ firejail [OPTIONS]                # starting a /bin/bash shell
+$ firejail [OPTIONS]                # starting the program specified in $SHELL, usually /bin/bash
 .PP
 $ firejail [OPTIONS] firefox        # starting Mozilla Firefox
 .PP
@@ -1317,7 +1317,7 @@ $ firejail --netfilter=/etc/firejail/webserver.net --net=eth0 \\
 .br
 
 .br
-.B nolocal.net
+.B nolocal.net/nolocal6.net
 is a desktop client firewall that disable access to local network. Example:
 .br
 
@@ -1558,7 +1558,7 @@ Parent pid 8553, child pid 8554
 Child process initialized
 .br
 [...]
-#if HAVE_USERNS
+#ifdef HAVE_USERNS
 .TP
 \fB\-\-noroot
 Install a user namespace with a single user - the current user.
@@ -2003,7 +2003,7 @@ $ firejail \-\-profile.print=browser
 .TP
 \fB\-\-protocol=protocol,protocol,protocol
 Enable protocol filter. The filter is based on seccomp and checks the first argument to socket system call.
-Recognized values: unix, inet, inet6, netlink and packet. This option is not supported for i386 architecture.
+Recognized values: unix, inet, inet6, netlink, packet and bluetooth. This option is not supported for i386 architecture.
 .br
 
 .br
@@ -2273,7 +2273,7 @@ rm: cannot remove `testfile': Operation not permitted
 .TP
 \fB\-\-seccomp.keep=syscall,@group,!syscall2
 Enable seccomp filter, blacklist all syscall not listed and "syscall2".
-The system calls needed by Firejail (group @default-keep: prctl, execve)
+The system calls needed by Firejail (group @default-keep: prctl, execve, execveat)
 are handled with the preload library. On a 64 bit architecture, an
 additional filter for 32 bit system calls can be installed with
 \-\-seccomp.32.keep.
@@ -2476,7 +2476,7 @@ $ firejail \-\-shell=none script.sh
 \fB\-\-shell=program
 Set default user shell. Use this shell to run the application using \-c shell option.
 For example "firejail \-\-shell=/bin/dash firefox" will start Mozilla Firefox as "/bin/dash \-c firefox".
-By default Bash shell (/bin/bash) is used.
+By default the user's preferred shell is used.
 .br
 
 .br
@@ -3023,7 +3023,7 @@ We provide a tool that automates all this integration, please see \&\flfirecfg\f
 .SH EXAMPLES
 .TP
 \f\firejail
-Sandbox a regular /bin/bash session.
+Sandbox a regular shell session.
 .TP
 \f\firejail firefox
 Start Mozilla Firefox.
@@ -3043,7 +3043,7 @@ Start Firefox in a new network namespace. An IP address is
 assigned automatically.
 .TP
 \f\firejail \-\-net=br0 \-\-ip=10.10.20.5 \-\-net=br1 \-\-net=br2
-Start a /bin/bash session in a new network namespace and connect it
+Start a shell session in a new network namespace and connect it
 to br0, br1, and br2 host bridge devices. IP addresses are assigned
 automatically for the interfaces connected to br1 and b2
 #endif

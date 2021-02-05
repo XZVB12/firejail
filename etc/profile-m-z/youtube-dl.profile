@@ -21,7 +21,6 @@ include allow-python2.inc
 include allow-python3.inc
 
 blacklist /tmp/.X11-unix
-blacklist ${RUNUSER}/wayland-*
 blacklist ${RUNUSER}
 
 include disable-common.inc
@@ -52,6 +51,7 @@ nou2f
 novideo
 protocol unix,inet,inet6
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 

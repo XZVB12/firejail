@@ -412,7 +412,7 @@ There is no root account (uid 0) defined in the namespace.
 \fBprotocol protocol1,protocol2,protocol3
 Enable protocol filter. The filter is based on seccomp and  checks the
 first argument to socket system call. Recognized values: \fBunix\fR,
-\fBinet\fR, \fBinet6\fR, \fBnetlink\fR and \fBpacket\fR.
+\fBinet\fR, \fBinet6\fR, \fBnetlink\fR, \fBpacket\fR and \fBbluetooth\fR.
 .TP
 \fBseccomp
 Enable seccomp filter and blacklist the syscalls in the default list. See man 1 firejail for more details.
@@ -860,6 +860,11 @@ If a new network namespace is created, enabled the network filter in filename.
 Use this option when you want to assign an IP address in a new namespace and
 the parent interface specified by --net is not configured. An IP address and
 a default gateway address also have to be added.
+
+.TP
+\fBnetns namespace
+Run the program in a named, persistent network namespace. These can
+be created and configured using "ip netns".
 
 .TP
 \fBveth-name name

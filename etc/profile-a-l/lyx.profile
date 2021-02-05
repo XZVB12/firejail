@@ -11,8 +11,13 @@ ignore private-tmp
 noblacklist ${HOME}/.config/LyX
 noblacklist ${HOME}/.lyx
 
+# Allow lua (blacklisted by disable-interpreters.inc)
 include allow-lua.inc
+
+# Allow perl (blacklisted by disable-interpreters.inc)
 include allow-perl.inc
+
+# Allow python (blacklisted by disable-interpreters.inc)
 include allow-python2.inc
 include allow-python3.inc
 
@@ -27,7 +32,7 @@ apparmor
 machine-id
 
 # private-bin atril,dvilualatex,env,latex,lua*,luatex,lyx,lyxclient,okular,pdf2latex,pdflatex,pdftex,perl*,python*,qpdf,qpdfview,sh,tex2lyx,texmf,xelatex
-private-etc alternatives,dconf,fonts,gtk-2.0,gtk-3.0,locale,locale.alias,locale.conf,lyx,mime.types,passwd,texmf,X11,xdg
+private-etc alternatives,dconf,fonts,gtk-2.0,gtk-3.0,locale,locale.alias,locale.conf,lyx,machine-id,mime.types,passwd,texmf,X11,xdg
 
 # Redirect
 include latex-common.profile

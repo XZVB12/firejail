@@ -10,6 +10,9 @@ noblacklist ${HOME}/.config/celluloid
 noblacklist ${HOME}/.config/gnome-mpv
 noblacklist ${HOME}/.config/youtube-dl
 
+# Allow lua (blacklisted by disable-interpreters.inc)
+include allow-lua.inc
+
 # Allow python (blacklisted by disable-interpreters.inc)
 include allow-python2.inc
 include allow-python3.inc
@@ -29,7 +32,7 @@ whitelist ${HOME}/.config/celluloid
 whitelist ${HOME}/.config/gnome-mpv
 whitelist ${HOME}/.config/youtube-dl
 include whitelist-common.inc
-include whitelist-players.inc
+include whitelist-player-common.inc
 include whitelist-runuser-common.inc
 include whitelist-usr-share-common.inc
 include whitelist-var-common.inc
@@ -43,6 +46,7 @@ noroot
 nou2f
 protocol unix,inet,inet6
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 

@@ -7,20 +7,20 @@ include ssh.local
 # Persistent global definitions
 include globals.local
 
-noblacklist /etc/ssh
-noblacklist /tmp/ssh-*
-noblacklist ${HOME}/.ssh
 # nc can be used as ProxyCommand, e.g. when using tor
 noblacklist ${PATH}/nc
 noblacklist ${PATH}/ncat
+
+# Allow ssh (blacklisted by disable-common.inc)
+include allow-ssh.inc
 
 include disable-common.inc
 include disable-exec.inc
 include disable-passwdmgr.inc
 include disable-programs.inc
 
-whitelist ${RUNUSER}/keyring/ssh
 whitelist ${RUNUSER}/gnupg/S.gpg-agent.ssh
+whitelist ${RUNUSER}/keyring/ssh
 include whitelist-usr-share-common.inc
 include whitelist-runuser-common.inc
 
@@ -34,7 +34,7 @@ nonewprivs
 # noroot - see issue #1543
 nosound
 notv
-nou2f
+# nou2f - OpenSSH >= 8.2 supports U2F
 novideo
 protocol unix,inet,inet6
 seccomp

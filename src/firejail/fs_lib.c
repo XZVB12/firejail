@@ -33,6 +33,52 @@ extern void fslib_install_system(void);
 static int lib_cnt = 0;
 static int dir_cnt = 0;
 
+char *find_in_path(const char *program) {
+	EUID_ASSERT();
+	if (arg_debug)
+		printf("Searching $PATH for %s\n", program);
+
+	char self[MAXBUF];
+	ssize_t len = readlink("/proc/self/exe", self, MAXBUF - 1);
+	if (len < 0)
+		errExit("readlink");
+	self[len] = '\0';
+
+	char *path = getenv("PATH");
+	if (!path)
+		return NULL;
+	char *dup = strdup(path);
+	if (!dup)
+		errExit("strdup");
+	char *tok = strtok(dup, ":");
+	while (tok) {
+		char *fname;
+		if (asprintf(&fname, "%s/%s", tok, program) == -1)
+			errExit("asprintf");
+
+		if (arg_debug)
+			printf("trying #%s#\n", fname);
+		struct stat s;
+		if (stat(fname, &s) == 0) {
+			// but skip links created by firecfg
+			char *rp = realpath(fname, NULL);
+			if (!rp)
+				errExit("realpath");
+			if (strcmp(self, rp) != 0) {
+				free(rp);
+				free(dup);
+				return fname;
+			}
+			free(rp);
+		}
+		free(fname);
+		tok = strtok(NULL, ":");
+	}
+
+	free(dup);
+	return NULL;
+}
+
 static void report_duplication(const char *full_path) {
 	char *fname = strrchr(full_path, '/');
 	if (fname && *(++fname) != '\0') {
@@ -165,7 +211,7 @@ void fslib_copy_dir(const char *full_path) {
 	mkdir_attr(dest, 0755, 0, 0);
 
 	if (mount(full_path, dest, NULL, MS_BIND|MS_REC, NULL) < 0 ||
-		mount(NULL, dest, NULL, MS_BIND|MS_REMOUNT|MS_NOSUID|MS_NODEV|MS_REC, NULL) < 0)
+		mount(NULL, dest, NULL, MS_BIND|MS_REMOUNT|MS_RDONLY|MS_NOSUID|MS_NODEV|MS_REC, NULL) < 0)
 		errExit("mount bind");
 	fs_logger2("clone", full_path);
 	fs_logger2("mount", full_path);
@@ -336,11 +382,40 @@ void fs_private_lib(void) {
 	// start timetrace
 	timetrace_start();
 
+	// bring in firejail executable libraries in case we are redirected here by a firejail symlink from /usr/local/bin/firejail
+	if (arg_debug || arg_debug_private_lib)
+		printf("Installing Firejail libraries\n");
+	fslib_install_list(PATH_FIREJAIL);
+
+	// bring in firejail directory
+	fslib_install_list(LIBDIR "/firejail");
+
+	// bring in dhclient libraries
+	if (any_dhcp()) {
+		if (arg_debug || arg_debug_private_lib)
+			printf("Installing dhclient libraries\n");
+		fslib_install_list(RUN_MNT_DIR "/dhclient");
+	}
+	fmessage("Firejail libraries installed in %0.2f ms\n", timetrace_end());
+
+	timetrace_start();
+
 	// copy the libs in the new lib directory for the main exe
 	if (cfg.original_program_index > 0) {
 		if (arg_debug || arg_debug_private_lib)
 			printf("Installing sandboxed program libraries\n");
-		fslib_install_list(cfg.original_argv[cfg.original_program_index]);
+
+		if (strchr(cfg.original_argv[cfg.original_program_index], '/'))
+			fslib_install_list(cfg.original_argv[cfg.original_program_index]);
+		else { // search executable in $PATH
+			EUID_USER();
+			char *fname = find_in_path(cfg.original_argv[cfg.original_program_index]);
+			EUID_ROOT();
+			if (fname) {
+				fslib_install_list(fname);
+				free(fname);
+			}
+		}
 	}
 
 	// for the shell
@@ -369,14 +444,10 @@ void fs_private_lib(void) {
 	}
 	fmessage("Program libraries installed in %0.2f ms\n", timetrace_end());
 
-	// install the reset of the system libraries
+	// install the rest of the system libraries
 	if (arg_debug || arg_debug_private_lib)
 		printf("Installing system libraries\n");
 	fslib_install_system();
-
-	// bring in firejail directory for --trace and seccomp post exec
-	// bring in firejail executable libraries in case we are redirected here by a firejail symlink from /usr/local/bin/firejail
-	fslib_install_list("/usr/bin/firejail,firejail"); // todo: use the installed path for the executable
 
 	fmessage("Installed %d %s and %d %s\n", lib_cnt, (lib_cnt == 1)? "library": "libraries",
 		dir_cnt, (dir_cnt == 1)? "directory": "directories");

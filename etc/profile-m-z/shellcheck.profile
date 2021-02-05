@@ -7,7 +7,6 @@ include shellcheck.local
 # Persistent global definitions
 include globals.local
 
-blacklist ${RUNUSER}/wayland-*
 blacklist ${RUNUSER}
 
 noblacklist ${DOCUMENTS}
@@ -40,6 +39,7 @@ nou2f
 novideo
 protocol unix
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 x11 none

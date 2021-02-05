@@ -1,4 +1,5 @@
-# Local customizations come here
+# This file is overwritten during software install.
+# Persistent customizations should go in a .local file.
 include whitelist-usr-share-common.local
 
 # common /usr/share whitelist for all profiles
@@ -16,6 +17,7 @@ whitelist /usr/share/enchant-2
 whitelist /usr/share/file
 whitelist /usr/share/fontconfig
 whitelist /usr/share/fonts
+whitelist /usr/share/fonts-config
 whitelist /usr/share/gir-1.0
 whitelist /usr/share/gjs-1.0
 whitelist /usr/share/glib-2.0
@@ -59,6 +61,9 @@ whitelist /usr/share/texlive
 whitelist /usr/share/texmf
 whitelist /usr/share/themes
 whitelist /usr/share/thumbnail.so
+whitelist /usr/share/uim
+whitelist /usr/share/vulkan
 whitelist /usr/share/X11
 whitelist /usr/share/xml
+whitelist /usr/share/zenity
 whitelist /usr/share/zoneinfo

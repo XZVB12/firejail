@@ -20,9 +20,13 @@
 #include "firejail.h"
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include <fcntl.h>
+#ifndef O_PATH
+#define O_PATH 010000000
+#endif
 
 #include <sys/prctl.h>
 #ifndef PR_SET_NO_NEW_PRIVS
@@ -292,11 +296,26 @@ static void extract_umask(pid_t pid) {
 		fprintf(stderr, "Error: cannot open umask file\n");
 		exit(1);
 	}
-	if (fscanf(fp, "%o", &orig_umask) != 1) {
+	if (fscanf(fp, "%3o", &orig_umask) != 1) {
 		fprintf(stderr, "Error: cannot read umask\n");
 		exit(1);
 	}
 	fclose(fp);
+}
+
+static int open_shell(void) {
+	EUID_ASSERT();
+	assert(cfg.shell);
+
+	if (arg_debug)
+		printf("Opening shell %s\n", cfg.shell);
+	// file descriptor will leak if not opened with O_CLOEXEC !!
+	int fd = open(cfg.shell, O_PATH|O_CLOEXEC);
+	if (fd == -1) {
+		fprintf(stderr, "Error: cannot open shell %s\n", cfg.shell);
+		exit(1);
+	}
+	return fd;
 }
 
 // return false if the sandbox identified by pid is not fully set up yet or if
@@ -316,7 +335,7 @@ bool is_ready_for_join(const pid_t pid) {
 	struct stat s;
 	if (fstat(fd, &s) == -1)
 		errExit("fstat");
-	if (!S_ISREG(s.st_mode) || s.st_uid != 0) {
+	if (!S_ISREG(s.st_mode) || s.st_uid != 0 || s.st_size != 1) {
 		close(fd);
 		return false;
 	}
@@ -391,6 +410,10 @@ void join(pid_t pid, int argc, char **argv, int index) {
 
 	extract_x11_display(parent);
 
+	int shfd = -1;
+	if (!arg_shell_none && !arg_audit)
+		shfd = open_shell();
+
 	EUID_ROOT();
 	// in user mode set caps seccomp, cpu, cgroup, etc
 	if (getuid() != 0) {
@@ -400,6 +423,7 @@ void join(pid_t pid, int argc, char **argv, int index) {
 		extract_cgroup(pid);
 		extract_nogroups(pid);
 		extract_user_namespace(pid);
+		extract_umask(pid);
 #ifdef HAVE_APPARMOR
 		extract_apparmor(pid);
 #endif
@@ -408,9 +432,6 @@ void join(pid_t pid, int argc, char **argv, int index) {
 	// set cgroup
 	if (cfg.cgroup)	// not available for uid 0
 		set_cgroup(cfg.cgroup);
-
-	// set umask, also uid 0
-	extract_umask(pid);
 
 	// join namespaces
 	if (arg_join_network) {
@@ -522,10 +543,9 @@ void join(pid_t pid, int argc, char **argv, int index) {
 		extract_command(argc, argv, index);
 		if (cfg.command_line == NULL) {
 			assert(cfg.shell);
-			cfg.command_line = cfg.shell;
 			cfg.window_title = cfg.shell;
 		}
-		if (arg_debug)
+		else if (arg_debug)
 			printf("Extracted command #%s#\n", cfg.command_line);
 
 		// set cpu affinity
@@ -554,11 +574,13 @@ void join(pid_t pid, int argc, char **argv, int index) {
 			dbus_set_system_bus_env();
 #endif
 
-		start_application(0, NULL);
+		start_application(0, shfd, NULL);
 
 		__builtin_unreachable();
 	}
 	EUID_USER();
+	if (shfd != -1)
+		close(shfd);
 
 	int status = 0;
 	//*****************************

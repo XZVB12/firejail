@@ -162,7 +162,14 @@ static void disable_file(OPERATION op, const char *filename) {
 	}
 	else if (op == MOUNT_TMPFS) {
 		if (S_ISDIR(s.st_mode)) {
-			fs_tmpfs(fname, 0);
+			if (getuid()) {
+				if (strncmp(cfg.homedir, fname, strlen(cfg.homedir)) != 0 ||
+				    fname[strlen(cfg.homedir)] != '/') {
+					fprintf(stderr, "Error: tmpfs outside $HOME is only available for root\n");
+					exit(1);
+				}
+			}
+			fs_tmpfs(fname, getuid());
 			last_disable = SUCCESSFUL;
 		}
 		else
@@ -443,7 +450,7 @@ void fs_blacklist(void) {
 void fs_tmpfs(const char *dir, unsigned check_owner) {
 	assert(dir);
 	if (arg_debug)
-		printf("Mounting tmpfs on %s\n", dir);
+		printf("Mounting tmpfs on %s, check owner: %s\n", dir, (check_owner)? "yes": "no");
 	// get a file descriptor for dir, fails if there is any symlink
 	int fd = safe_fd(dir, O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
 	if (fd == -1)
@@ -788,6 +795,8 @@ void disable_config(void) {
 		disable_file(BLACKLIST_FILE, RUN_FIREJAIL_PROFILE_DIR);
 	if (stat(RUN_FIREJAIL_X11_DIR, &s) == 0)
 		disable_file(BLACKLIST_FILE, RUN_FIREJAIL_X11_DIR);
+	if (!arg_appimage && stat(RUN_FIREJAIL_APPIMAGE_DIR, &s) == 0)
+		disable_file(BLACKLIST_FILE, RUN_FIREJAIL_APPIMAGE_DIR);
 }
 
 
@@ -1253,29 +1262,4 @@ void fs_private_tmp(void) {
 		}
 	}
 	closedir(dir);
-}
-
-// this function is called from sandbox.c before blacklist/whitelist functions
-void fs_private_cache(void) {
-	char *cache;
-	if (asprintf(&cache, "%s/.cache", cfg.homedir) == -1)
-		errExit("asprintf");
-	// check if ~/.cache is a valid destination
-	struct stat s;
-	if (lstat(cache, &s) == -1) {
-		fwarning("skipping private-cache: cannot find %s\n", cache);
-		free(cache);
-		return;
-	}
-	if (!S_ISDIR(s.st_mode)) {
-		if (S_ISLNK(s.st_mode))
-			fwarning("skipping private-cache: %s is a symbolic link\n", cache);
-		else
-			fwarning("skipping private-cache: %s is not a directory\n", cache);
-		free(cache);
-		return;
-	}
-	// do the mount
-	fs_tmpfs(cache, getuid()); // check ownership of ~/.cache
-	free(cache);
 }

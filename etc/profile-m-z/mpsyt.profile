@@ -13,6 +13,9 @@ noblacklist ${HOME}/.mplayer
 noblacklist ${HOME}/.netrc
 noblacklist ${HOME}/mps
 
+# Allow lua (blacklisted by disable-interpreters.inc)
+include allow-lua.inc
+
 # Allow python (blacklisted by disable-interpreters.inc)
 include allow-python2.inc
 include allow-python3.inc
@@ -41,7 +44,7 @@ whitelist ${HOME}/.mplayer
 whitelist ${HOME}/.netrc
 whitelist ${HOME}/mps
 include whitelist-common.inc
-include whitelist-players.inc
+include whitelist-player-common.inc
 include whitelist-var-common.inc
 
 apparmor

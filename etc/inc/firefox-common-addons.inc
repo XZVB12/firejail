@@ -2,6 +2,8 @@
 # Persistent customizations should go in a .local file.
 include firefox-common-addons.local
 
+ignore include whitelist-runuser-common.inc
+
 noblacklist ${HOME}/.config/kgetrc
 noblacklist ${HOME}/.config/okularpartrc
 noblacklist ${HOME}/.config/okularrc
@@ -56,11 +58,12 @@ whitelist ${HOME}/.wine-pipelight64
 whitelist ${HOME}/.zotero
 whitelist ${HOME}/dwhelper
 
-# GNOME Shell integration (chrome-gnome-shell) needs dbus and python 3 (blacklisted by disable-interpreters.inc)
+# GNOME Shell integration (chrome-gnome-shell) needs dbus and python
 noblacklist ${HOME}/.local/share/gnome-shell
 whitelist ${HOME}/.local/share/gnome-shell
 ignore dbus-user none
 ignore dbus-system none
+# Allow python (blacklisted by disable-interpreters.inc)
 include allow-python3.inc
 
 # KeePassXC Browser Integration
@@ -69,3 +72,20 @@ include allow-python3.inc
 # Flash plugin
 # private-etc must first be enabled in firefox-common.profile and in profiles including it.
 #private-etc adobe
+
+# ff2mpv
+#ignore noexec ${HOME}
+#noblacklist ${HOME}/.config/mpv
+#noblacklist ${HOME}/.config/youtube-dl
+#noblacklist ${HOME}/.netrc
+#include allow-lua.inc
+#include allow-python3.inc
+#mkdir ${HOME}/.config/mpv
+#mkdir ${HOME}/.config/youtube-dl
+#whitelist ${HOME}/.config/mpv
+#whitelist ${HOME}/.config/youtube-dl
+#whitelist ${HOME}/.netrc
+#whitelist /usr/share/lua
+#whitelist /usr/share/lua*
+#whitelist /usr/share/vulkan
+#private-bin env,mpv,python3*,waf,youtube-dl

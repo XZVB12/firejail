@@ -8,6 +8,8 @@ include globals.local
 
 # noexec /tmp is included in chromium-common.profile and breaks Brave
 ignore noexec /tmp
+# TOR is installed in ${HOME}
+ignore noexec ${HOME}
 
 noblacklist ${HOME}/.cache/BraveSoftware
 noblacklist ${HOME}/.config/BraveSoftware

@@ -6,7 +6,8 @@ include totem.local
 # Persistent global definitions
 include globals.local
 
-# Allow lua (required for youtube video)
+# Allow lua (blacklisted by disable-interpreters.inc)
+# required for youtube video
 include allow-lua.inc
 
 # Allow python (blacklisted by disable-interpreters.inc)
@@ -30,7 +31,7 @@ whitelist ${HOME}/.config/totem
 whitelist ${HOME}/.local/share/totem
 whitelist /usr/share/totem
 include whitelist-common.inc
-include whitelist-players.inc
+include whitelist-player-common.inc
 include whitelist-runuser-common.inc
 include whitelist-usr-share-common.inc
 include whitelist-var-common.inc

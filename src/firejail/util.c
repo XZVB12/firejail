@@ -36,6 +36,11 @@
 #define O_PATH 010000000
 #endif
 
+#include <sys/syscall.h>
+#ifdef __NR_openat2
+#include <linux/openat2.h>
+#endif
+
 #define MAX_GROUPS 1024
 #define MAXBUF 4098
 #define EMPTY_STRING ("")
@@ -70,10 +75,11 @@ static void clean_supplementary_groups(gid_t gid) {
 		goto clean_all;
 
 	// clean supplementary group list
-	// allow only tty, audio, video, games
+	// allow only firejail, tty, audio, video, games
 	gid_t new_groups[MAX_GROUPS];
 	int new_ngroups = 0;
 	char *allowed[] = {
+		"firejail",
 		"tty",
 		"audio",
 		"video",
@@ -559,27 +565,18 @@ char *clean_pathname(const char *path) {
 	if (!rv)
 		errExit("malloc");
 
-	if (len > 0) {
-		size_t i = 0, j = 0, cnt = 0;
-		for (; i < len; i++) {
-			if (path[i] == '/')
-				cnt++;
-			else
-				cnt = 0;
-
-			if (cnt < 2) {
-				rv[j] = path[i];
-				j++;
-			}
-		}
-		rv[j] = '\0';
-
-		// remove a trailing slash
-		if (j > 1 && rv[j - 1] == '/')
-			rv[j - 1] = '\0';
+	size_t i = 0;
+	size_t j = 0;
+	while (path[i]) {
+		while (path[i] == '/' && path[i+1] == '/')
+			i++;
+		rv[j++] = path[i++];
 	}
-	else
-		*rv = '\0';
+	rv[j] = '\0';
+
+	// remove a trailing slash
+	if (j > 1 && rv[j - 1] == '/')
+		rv[j - 1] = '\0';
 
 	return rv;
 }
@@ -814,20 +811,6 @@ void notify_other(int fd) {
 	fclose(stream);
 }
 
-
-
-
-// Equivalent to the GNU version of basename, which is incompatible with
-// the POSIX basename. A few lines of code saves any portability pain.
-// https://www.gnu.org/software/libc/manual/html_node/Finding-Tokens-in-a-String.html#index-basename
-const char *gnu_basename(const char *path) {
-	const char *last_slash = strrchr(path, '/');
-	if (!last_slash)
-		return path;
-	return last_slash+1;
-}
-
-
 uid_t pid_get_uid(pid_t pid) {
 	EUID_ASSERT();
 	uid_t rv = 0;
@@ -1007,12 +990,8 @@ int create_empty_dir_as_user(const char *dir, mode_t mode) {
 				if (chmod(dir, mode) == -1)
 					{;} // do nothing
 			}
-			else if (arg_debug) {
-				char *str;
-				if (asprintf(&str, "Directory %s not created", dir) == -1)
-					errExit("asprintf");
-				perror(str);
-			}
+			else if (arg_debug)
+				printf("Directory %s not created: %s\n", dir, strerror(errno));
 #ifdef HAVE_GCOV
 			__gcov_flush();
 #endif
@@ -1157,46 +1136,57 @@ void disable_file_path(const char *path, const char *file) {
 	free(fname);
 }
 
-// open file without following any symbolic link
-// returns a file descriptor on success, or -1 if a symlink is found
+// open an existing file without following any symbolic link
 int safe_fd(const char *path, int flags) {
+	flags |= O_NOFOLLOW;
 	assert(path);
-	if (*path != '/')
-		goto errexit;
-	if (strstr(path, ".."))
-		goto errexit;
-
-	int parentfd = open("/", O_PATH|O_DIRECTORY|O_CLOEXEC);
-	if (parentfd == -1)
-		errExit("open");
+	if (*path != '/' || strstr(path, "..")) {
+		fprintf(stderr, "Error: invalid path %s\n", path);
+		exit(1);
+	}
 	int fd = -1;
 
-	char *last_tok = EMPTY_STRING;
+#ifdef __NR_openat2 // kernel 5.6 or better
+	struct open_how oh;
+	memset(&oh, 0, sizeof(oh));
+	oh.flags = flags;
+	oh.resolve = RESOLVE_NO_SYMLINKS;
+	fd = syscall(__NR_openat2, -1, path, &oh, sizeof(struct open_how));
+	if (fd != -1 || errno != ENOSYS)
+		return fd;
+#endif
+
+	// openat2 syscall is not available, traverse path and
+	// check each component if it is a symbolic link or not
 	char *dup = strdup(path);
 	if (!dup)
 		errExit("strdup");
 	char *tok = strtok(dup, "/");
 	if (!tok) { // root directory
 		free(dup);
-		return parentfd;
+		return open("/", flags);
 	}
+	char *last_tok = EMPTY_STRING;
+	int parentfd = open("/", O_PATH|O_CLOEXEC);
+	if (parentfd == -1)
+		errExit("open");
 
 	while(1) {
-		// open the element, assuming it is a directory; this fails with ENOTDIR if it is a symbolic link
+		// open path component, assuming it is a directory; this fails with ENOTDIR if it is a symbolic link
 		// if token is a single dot, the previous directory is reopened
 		fd = openat(parentfd, tok, O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
 		if (fd == -1) {
-			// if the following token is NULL, the current token is the final path element
+			// if the following token is NULL, the current token is the final path component
 			// try again to open it, this time using the passed flags, and return -1 or the descriptor
 			last_tok = tok;
 			tok = strtok(NULL, "/");
 			if (!tok)
-				fd = openat(parentfd, last_tok, flags|O_NOFOLLOW);
+				fd = openat(parentfd, last_tok, flags);
 			close(parentfd);
 			free(dup);
-			return fd; // -1 if open failed
+			return fd;
 		}
-		// move on to next path segment
+		// move on to next path component
 		last_tok = tok;
 		tok = strtok(NULL, "/");
 		if (!tok)
@@ -1204,18 +1194,13 @@ int safe_fd(const char *path, int flags) {
 		close(parentfd);
 		parentfd = fd;
 	}
-
-	// we are here because the last path element exists and is of file type directory
+	// getting here when the last path component exists and is of file type directory
 	// reopen it using the passed flags
 	close(fd);
-	fd = openat(parentfd, last_tok, flags|O_NOFOLLOW);
+	fd = openat(parentfd, last_tok, flags);
 	close(parentfd);
 	free(dup);
-	return fd; // -1 if open failed
-
-errexit:
-	fprintf(stderr, "Error: cannot open \"%s\": invalid path\n", path);
-	exit(1);
+	return fd;
 }
 
 int has_handler(pid_t pid, int signal) {
@@ -1321,7 +1306,7 @@ static int has_link(const char *dir) {
 	assert(dir);
 	int fd = safe_fd(dir, O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
 	if (fd == -1) {
-		if (errno == ENOTDIR && is_dir(dir))
+		if ((errno == ELOOP || errno == ENOTDIR) && is_dir(dir))
 			return 1;
 	}
 	else

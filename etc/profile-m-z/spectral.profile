@@ -1,5 +1,5 @@
 # Firejail profile for spectral
-# Description: Desktop client for Matrix 
+# Description: Desktop client for Matrix
 # This file is overwritten after every install/update
 # Persistent local customizations
 include spectral.local
@@ -24,7 +24,7 @@ whitelist ${HOME}/.cache/ENCOM/Spectral
 whitelist ${HOME}/.config/ENCOM
 whitelist ${DOWNLOADS}
 include whitelist-common.inc
-include whitelist-runuser-common.inc 
+include whitelist-runuser-common.inc
 include whitelist-usr-share-common.inc
 include whitelist-var-common.inc
 
@@ -50,4 +50,8 @@ private-etc alsa,alternatives,asound.conf,ca-certificates,crypto-policies,fonts,
 private-tmp
 
 dbus-user none
+# Comment the above line and uncomment below lines for notification popups
+# dbus-user filter
+# dbus-user.talk org.freedesktop.Notifications
+# dbus-user.talk org.kde.StatusNotifierWatcher
 dbus-system none

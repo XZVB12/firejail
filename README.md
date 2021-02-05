@@ -1,6 +1,7 @@
 # Firejail
-[![Test Status](https://travis-ci.org/netblue30/firejail.svg?branch=master)](https://travis-ci.org/netblue30/firejail)
 [![Build Status](https://gitlab.com/Firejail/firejail_ci/badges/master/pipeline.svg)](https://gitlab.com/Firejail/firejail_ci/pipelines/)
+[![CodeQL](https://github.com/netblue30/firejail/workflows/CodeQL/badge.svg)](https://github.com/netblue30/firejail/actions?query=workflow%3ACodeQL)
+[![Build CI](https://github.com/netblue30/firejail/workflows/Build%20CI/badge.svg)](https://github.com/netblue30/firejail/actions?query=workflow%3A%22Build+CI%22)
 [![Packaging status](https://repology.org/badge/tiny-repos/firejail.svg)](https://repology.org/project/firejail/versions)
 
 Firejail is a SUID sandbox program that reduces the risk of security breaches by restricting
@@ -65,8 +66,6 @@ Documentation: https://firejail.wordpress.com/documentation-2/
 FAQ: https://github.com/netblue30/firejail/wiki/Frequently-Asked-Questions
 
 Wiki: https://github.com/netblue30/firejail/wiki
-
-Travis-CI status: https://travis-ci.org/netblue30/firejail
 
 GitLab-CI status: https://gitlab.com/Firejail/firejail_ci/pipelines/
 
@@ -154,49 +153,50 @@ We also keep a list of profile fixes for previous released versions in [etc-fixe
 `````
 
 `````
-## Latest released version: 0.9.62
+## Latest released version: 0.9.64
 
-## Current development version: 0.9.63
+## Current development version: 0.9.65
+
+Milestone page: https://github.com/netblue30/firejail/milestone/1
+Release discussion: https://github.com/netblue30/firejail/issues/3696
+
+
 
 ### Profile Statistics
 
 A small tool to print profile statistics. Compile as usual and run in /etc/profiles:
-`````
+```
+$ sudo cp src/profstats/profstats /etc/firejail/.
+$ cd /etc/firejail
 $ ./profstats *.profile
 Warning: multiple caps in transmission-daemon.profile
 
 Stats:
-    profiles			1029
-    include local profile	1029   (include profile-name.local)
-    include globals		1029   (include globals.local)
-    blacklist ~/.ssh		1005   (include disable-common.inc)
+    profiles			1064
+    include local profile	1064   (include profile-name.local)
+    include globals		1064   (include globals.local)
+    blacklist ~/.ssh		959   (include disable-common.inc)
     seccomp			975
-    capabilities		1028
-    noexec			899   (include disable-exec.inc)
-    memory-deny-write-execute	220
-    apparmor			549
-    private-bin			542
-    private-dev			897
-    private-etc			431
-    private-tmp			784
-    whitelist home directory	469
-    whitelist var		695   (include whitelist-var-common.inc)
-    whitelist run/user		334   (include whitelist-runuser-common.inc
+    capabilities		1063
+    noexec			944   (include disable-exec.inc)
+    memory-deny-write-execute	229
+    apparmor			605
+    private-bin			564
+    private-dev			932
+    private-etc			462
+    private-tmp			823
+    whitelist home directory	502
+    whitelist var		744   (include whitelist-var-common.inc)
+    whitelist run/user		461   (include whitelist-runuser-common.inc
 					or blacklist ${RUNUSER})
-    whitelist usr/share		354   (include whitelist-usr-share-common.inc
-    net none			332
-    dbus-user none 		523
-    dbus-system none 		627
-`````
+    whitelist usr/share		451   (include whitelist-usr-share-common.inc
+    net none			345
+    dbus-user none 		564
+    dbus-user filter 		85
+    dbus-system none 		696
+    dbus-system filter 		7
+```
 
 ### New profiles:
 
-gfeeds, firefox-x11, tvbrowser, rtv, clipgrab, gnome-passwordsafe, bibtex, gummi, latex, pdflatex, tex, wpp, wpspdf, wps, et,
-multimc, gnome-hexgl, com.github.johnfactotum.Foliate, desktopeditors, impressive, mupdf-gl, mupdf-x11, mupdf-x11-curl,
-muraster, mutool, planmaker18, planmaker18free, presentations18, presentations18free, textmaker18, textmaker18free, teams, xournal,
-gnome-screenshot, ripperX, sound-juicer, iagno, com.github.dahenson.agenda, gnome-pomodoro, gnome-todo, kmplayer,
-penguin-command, x2goclient, frogatto, gnome-mines, gnome-nibbles, lightsoff, ts3client_runscript.sh, warmux, ferdi, abiword,
-four-in-a-row, gnome-mahjongg, gnome-robots, gnome-sudoku, gnome-taquin, gnome-tetravex, blobwars, gravity-beams-and-evaporating-stars,
-hyperrogue, jumpnbump-menu, jumpnbump, magicor, mindless, mirrormagic, mrrescue, scorched3d-wrapper, scorchwentbonkers,
-seahorse-adventures, wordwarvi, xbill, gnome-klotski, five-or-more, swell-foop, fdns, jitsi-meet-desktop, nicontine, steam-runtime, apostrophe, quadrapassel, dino-im, strawberry, hitori, bijiben, gnote, gnubik, ZeGrapher, gapplication, xonotic-sdl-wrapper, openarena_ded, cawbird, freetube, homebank, mattermost-desktop, newsflash, com.gitlab.newsflash, element-desktop, sushi, xfce4-screenshooter, org.gnome.NautilusPreviewer, lyx, minitube, nuclear, mtpaint, minecraft-launcher, gnome-calendar, vmware, git-cola, otter-browser, kazam, menulibre, musictube, onboard, fractal, mirage, quaternion, spectral, man, psi, smuxi-frontend-gnome, balsa, kube, trojita, cola, twitch, youtube, youtubemusic-nativefier, ytmdesktop, dbus-send, notify-send, qrencode,
-xournalpp, chromium-freeworld, equalx
+vmware-view

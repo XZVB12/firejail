@@ -6,13 +6,13 @@ include pdftotext.local
 # Persistent global definitions
 include globals.local
 
-blacklist ${RUNUSER}/wayland-*
 blacklist ${RUNUSER}
 
 noblacklist ${DOCUMENTS}
 
 include disable-common.inc
 include disable-devel.inc
+include disable-exec.inc
 include disable-interpreters.inc
 include disable-passwdmgr.inc
 include disable-programs.inc
@@ -40,6 +40,7 @@ nou2f
 novideo
 protocol unix
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 x11 none

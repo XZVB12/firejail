@@ -21,7 +21,7 @@ include globals.local
 #  - ...
 #
 # Often these scripts require a shell:
-#noblacklist ${PATH}/sh
+#include allow-bin-sh.inc
 #private-bin sh
 
 noblacklist ${HOME}/.config/mpv
@@ -30,6 +30,7 @@ noblacklist ${HOME}/.netrc
 
 # Allow lua (blacklisted by disable-interpreters.inc)
 include allow-lua.inc
+
 # Allow python (blacklisted by disable-interpreters.inc)
 include allow-python2.inc
 include allow-python3.inc
@@ -50,7 +51,7 @@ whitelist ${HOME}/.config/mpv
 whitelist ${HOME}/.config/youtube-dl
 whitelist ${HOME}/.netrc
 include whitelist-common.inc
-include whitelist-players.inc
+include whitelist-player-common.inc
 whitelist /usr/share/lua
 whitelist /usr/share/lua*
 whitelist /usr/share/vulkan
@@ -67,6 +68,7 @@ noroot
 nou2f
 protocol unix,inet,inet6,netlink
 seccomp
+seccomp.block-secondary
 shell none
 tracelog
 

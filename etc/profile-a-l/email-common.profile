@@ -58,8 +58,10 @@ private-cache
 private-dev
 private-tmp
 
+dbus-user none
+dbus-system none
+
 # encrypting and signing email
-read-only ${HOME}/.config/mimeapps.list
 writable-run-user
 
 # If you want to read local mail stored in /var/mail, add the following to email-common.local:

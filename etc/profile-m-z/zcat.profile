@@ -8,6 +8,7 @@ include zcat.local
 #include globals.local
 
 # Allow running kernel config check
+ignore include disable-shell.inc
 noblacklist /proc/config.gz
 
 # Redirect

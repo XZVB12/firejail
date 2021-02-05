@@ -13,6 +13,9 @@ noblacklist ${HOME}/.filezilla
 include allow-python2.inc
 include allow-python3.inc
 
+# Allow ssh (blacklisted by disable-common.inc)
+include allow-ssh.inc
+
 include disable-common.inc
 include disable-devel.inc
 include disable-interpreters.inc

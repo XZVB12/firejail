@@ -103,6 +103,9 @@ include globals.local
 # Allows files commonly used by IDEs
 #include allow-common-devel.inc
 
+# Allow ssh (blacklisted by disable-common.inc)
+#include allow-ssh.inc
+
 #include disable-common.inc
 #include disable-devel.inc
 #include disable-exec.inc
@@ -157,6 +160,8 @@ include globals.local
 #seccomp
 ##seccomp !chroot
 ##seccomp.drop SYSCALLS (see syscalls.txt)
+#seccomp.block-secondary
+##seccomp-error-action log (Only for debugging seccomp issues)
 #shell none
 #tracelog
 # Prefer 'x11 none' instead of 'blacklist /tmp/.X11-unix' if 'net none' is set

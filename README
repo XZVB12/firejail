@@ -69,7 +69,8 @@ Adrian L. Shaw (https://github.com/adrianlshaw)
 	- add profanity profile
 	- add barrirer profile
 Aidan Gauland (https://github.com/aidalgol)
-	- added electron and riot-web profiles
+	- added electron, riot-web and npm profiles
+	- whitelist Bohemia Interactive config dir for Steam
 Akhil Hans Maulloo (https://github.com/kouul)
 	- xz profile
 Alexey Kuznetsov (kuznet@ms2.inr.ac.ru)
@@ -159,6 +160,11 @@ Bandie (https://github.com/Bandie)
 	- fixed riot-desktop
 Barış Ekin Yıldırım (https://github.com/circuitshaker)
 	- removing net none from code.profile
+bbhtt (https://github.com/bbhtt)
+	- improvements to balsa,fractal,gajim,trojita profiles
+	- improvements to nheko, spectral, feh, links, lynx profiles
+	- added alacartem com.github.bleakgrey.tootle, photoflare profiles
+	- add profiles for MS Edge dev build for Linux and Librewolf
 Benjamin Kampmann (https://github.com/ligthyear)
 	- Forward exit code from child process
 bitfreak25 (https://github.com/bitfreak25)
@@ -178,12 +184,15 @@ Brad Ackerman
 	- blacklist Bitwarden config in disable-passwdmgr.inc
 briaeros (https://github.com/briaeros)
 	- fix command test in jail_prober.py
+botherer (https://github.com/botherder)
+	- add CoyIM profile
 Bruno Nova (https://github.com/brunonova)
 	- whitelist fix
 	- bash arguments fix
 Bundy01 (https://github.com/Bundy01)
 	- fixup geary
 	- add gradio profile
+	- update virtualbox.profile
 BytesTuner (https://github.com/BytesTuner)
 	- provided keepassxc profile
 caoliver (https://github.com/caoliver)
@@ -251,12 +260,16 @@ Danil Semelenov (https://github.com/sgtpep)
 Dara Adib (https://github.com/daradib)
 	- ssh profile fix
 	- evince profile fix
+	- linphone profile fix
 Dario Pellegrini (https://github.com/dpellegr)
 	- allowing links in netns
 David Thole (https://github.com/TheDarkTrumpet)
 	- added profile for teams-for-linux
 Davide Beatrici (https://github.com/davidebeatrici)
 	- steam.profile: correctly blacklist unneeded directories in user's home
+	- minetest fixes
+David Hyrule (https://github.com/Svaag)
+	- remove nou2f in ssh profile
 Deelvesh Bunjun (https://github.com/DeelveshBunjun)
 	- added xpdf profile
 Denys Havrysh (https://github.com/vutny)
@@ -296,6 +309,8 @@ Fabian Würfl (https://github.com/BafDyce)
 	- Liferea profile
 Felipe Barriga Richards (https://github.com/fbarriga)
 	- --private-etc fix
+fenuks (https://github.com/fenuks)
+	- fix sound in games using FMOD
 Florian Begusch (https://github.com/florianbegusch)
 	- (la)tex profiles
 	- fixed transmission-common.profile
@@ -415,6 +430,8 @@ hawkey116477 (https://github.com/hawkeye116477)
 	- updated Waterfox profile
 Helmut Grohne (https://github.com/helmutg)
 	-  compiler support in the build system - Debian bug #869707
+hhzek0014 (https://github.com/hhzek0014)
+	- updated  bibletime.profile
 hlein (https://github.com/hlein)
 	- strip out \r's from jail prober
 Holger Heinz (https://github.com/hheinz)
@@ -512,6 +529,12 @@ KellerFuchs (https://github.com/KellerFuchs)
 	- added support for .local profile files in /etc/firejail
 	- fixed Cryptocat profile
 	- make ~/.local read-only
+Kelvin (https://github.com/kmk3)
+	- disable ldns utilities, dnssec-*, khost, unbound-host
+	- sort DNS / RUNUSER paths
+	- improve bug_report.md
+	- fix keypassxc
+	- blacklist oksh shell in disable-shell.inc
 Kishore96in (https://github.com/Kishore96in)
 	- added falkon profile
 	- kxmlgui fixes
@@ -524,6 +547,7 @@ KOLANICH (https://github.com/KOLANICH)
 	- fix meld
 kortewegdevries (https://github.com/kortewegdevries)
 	- a whole bunch of new profiles and fixes
+	- whitelisting evolution, kmail
 Kristóf Marussy (https://github.com/kris7t)
 	- dns support
 Kunal Mehta (https://github.com/legoktm)
@@ -542,6 +566,7 @@ Liorst4 (https://github.com/Liorst4)
 	- Preserve CFLAGS given to configure in common.mk.in
 	- fix emacs config to load as read-write
 	- disable browser drm by default
+	- minetest fixes
 Lockdis (https://github.com/Lockdis)
 	- Added crow, nyx, and google-earth-pro profiles
 Lukáš Krejčí (https://github.com/lskrejci)
@@ -600,6 +625,8 @@ Neo00001 (https://github.com/Neo00001)
 	- add vmware profile
 	- update virtualbox profile
 	- update telegram profile
+	- add spectacle profile
+	- add kdiff3 profile
 Nick Fox (https://github.com/njfox)
 	- add a profile alias for code-oss
 	- add code-oss config directory
@@ -610,6 +637,8 @@ Niklas Haas (https://github.com/haasn)
 	- blacklisting for keybase.io's client
 Niklas Goerke (https://github.com/Niklas974)
 	- update QOwnNotes profile
+Nikos Chantziaras (https://github.com/realnc)
+	- fix audio support for Discord
 nyancat18 (https://github.com/nyancat18)
 	- added ardour4, dooble, karbon, krita profiles
 Ondra Nekola (https://github.com/satai)
@@ -697,8 +726,12 @@ Rahiel Kasim (https://github.com/rahiel)
 	- added telegram-desktop profile
 Rahul Golam (https://github.com/technoLord)
 	- strings profile
+RandomVoid (https://github.com/RandomVoid)
+	- fix building C# projects in Godot
 Raphaël Droz (https://github.com/drzraf)
 	- zoom profile fixes
+realaltffour (https://github.com/realaltffour)
+	- add lynx support to newsboat profile
 Reiner Herrmann (https://github.com/reinerh)
 	- a number of build patches
 	- man page fixes
@@ -718,6 +751,8 @@ RD PROJEKT (https://github.com/RDProjekt)
 	- support AMD GPU by OpenCL in Blender
 rogshdo (https://github.com/rogshdo)
 	- BitlBee profile
+rootalc (https://github.com/rootalc)
+	- add nolocal6.net filter
 Ruan (https://github.com/ruany)
 	- fixed hexchat profile
 rusty-snake (https://github.com/rusty-snake)
@@ -949,6 +984,8 @@ Vladimir Schowalter (https://github.com/VladimirSchowalter20)
 	read-only kde5 services directory
 xee5ch (https://github.com/xee5ch)
 	- skypeforlinux profile
+Ypnose (https://github.com/Ypnose)
+	- disable-shell.inc: add mksh shell
 yumkam (https://github.com/yumkam)
 	- add compile-time option to restrict --net= to root only
 	- man page fixes

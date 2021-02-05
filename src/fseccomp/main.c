@@ -20,7 +20,7 @@
 #include "fseccomp.h"
 #include "../include/seccomp.h"
 int arg_quiet = 0;
-int arg_seccomp_error_action = EPERM; // error action: errno, log or kill
+int arg_seccomp_error_action = SECCOMP_RET_ERRNO | EPERM; // error action: errno, log or kill
 
 static void usage(void) {
 	printf("Usage:\n");
@@ -69,11 +69,7 @@ printf("\n");
 		return 0;
 	}
 
-#ifdef WARN_DUMPABLE
-	// check FIREJAIL_PLUGIN in order to not print a warning during make
-	if (prctl(PR_GET_DUMPABLE, 0, 0, 0, 0) == 1 && getuid() && getenv("FIREJAIL_PLUGIN"))
-		fprintf(stderr, "Error fseccomp: I am dumpable\n");
-#endif
+	warn_dumpable();
 
 	char *quiet = getenv("FIREJAIL_QUIET");
 	if (quiet && strcmp(quiet, "yes") == 0)

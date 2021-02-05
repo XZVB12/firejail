@@ -6,6 +6,8 @@ include thunderbird.local
 # Persistent global definitions
 include globals.local
 
+ignore include whitelist-runuser-common.inc
+
 # writable-run-user and dbus are needed by enigmail
 ignore dbus-user none
 ignore dbus-system none
@@ -57,8 +59,6 @@ novideo
 
 # We need the real /tmp for data exchange when xdg-open handles email attachments on KDE
 ignore private-tmp
-
-read-only ${HOME}/.config/mimeapps.list
 
 # Redirect
 include firefox-common.profile

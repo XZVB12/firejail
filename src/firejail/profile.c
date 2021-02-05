@@ -383,10 +383,12 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 		return 0;
 	}
 	else if (strcmp(ptr, "private-cache") == 0) {
+#ifdef HAVE_USERTMPFS
 		if (checkcfg(CFG_PRIVATE_CACHE))
 			arg_private_cache = 1;
 		else
 			warning_feature_disabled("private-cache");
+#endif
 		return 0;
 	}
 	else if (strcmp(ptr, "private-dev") == 0) {
@@ -617,6 +619,17 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 #endif
 		return 0;
 	}
+	else if (strncmp(ptr, "netns  ", 6) == 0) {
+#ifdef HAVE_NETWORK
+		if (checkcfg(CFG_NETWORK)) {
+			arg_netns = ptr + 6;
+			check_netns(arg_netns);
+		}
+		else
+			warning_feature_disabled("networking");
+#endif
+		return 0;
+	}
 	else if (strcmp(ptr, "net none") == 0) {
 		arg_nonetwork  = 1;
 		cfg.bridge0.configured = 0;
@@ -741,6 +754,12 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 			// read the address
 			if (atomac(ptr + 4, br->macsandbox)) {
 				fprintf(stderr, "Error: invalid MAC address\n");
+				exit(1);
+			}
+
+			// check multicast address
+			if (br->macsandbox[0] & 1) {
+				fprintf(stderr, "Error: invalid MAC address (multicast)\n");
 				exit(1);
 			}
 		}
@@ -893,7 +912,7 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 	if (strncmp(ptr, "protocol ", 9) == 0) {
 		if (checkcfg(CFG_SECCOMP)) {
 			if (cfg.protocol) {
-				fwarning("two protocol lists are present, \"%s\" will be installed\n", cfg.protocol);
+				fwarning("more than one protocol list is present, \"%s\" will be installed\n", cfg.protocol);
 				return 0;
 			}
 
@@ -1412,12 +1431,12 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 	// filesystem bind
 	if (strncmp(ptr, "bind ", 5) == 0) {
 		if (checkcfg(CFG_BIND)) {
+			// extract two directories
 			if (getuid() != 0) {
 				fprintf(stderr, "Error: --bind option is available only if running as root\n");
 				exit(1);
 			}
 
-			// extract two directories
 			char *dname1 = ptr + 5;
 			char *dname2 = split_comma(dname1); // this inserts a '0 to separate the two dierctories
 			if (dname2 == NULL) {
@@ -1495,7 +1514,10 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 		if (checkcfg(CFG_JOIN) || getuid() == 0) {
 			// try to join by name only
 			pid_t pid;
-			if (!name2pid(ptr + 14, &pid)) {
+			EUID_ROOT();
+			int r = name2pid(ptr + 14, &pid);
+			EUID_USER();
+			if (!r) {
 				if (!cfg.shell && !arg_shell_none)
 					cfg.shell = guess_shell();
 
@@ -1563,10 +1585,12 @@ int profile_check_line(char *ptr, int lineno, const char *fname) {
 	else if (strncmp(ptr, "noexec ", 7) == 0)
 		ptr += 7;
 	else if (strncmp(ptr, "tmpfs ", 6) == 0) {
+#ifndef HAVE_USERTMPFS
 		if (getuid() != 0) {
 			fprintf(stderr, "Error: tmpfs available only when running the sandbox as root\n");
 			exit(1);
 		}
+#endif
 		ptr += 6;
 	}
 	else {
