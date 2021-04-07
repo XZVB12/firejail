@@ -35,7 +35,7 @@ mkdir ${HOME}/.cache/winetricks
 mkdir ${HOME}/.config/lutris
 mkdir ${HOME}/.local/share/lutris
 # mkdir ${HOME}/.wine
-whitelist ${HOME}/Downloads
+whitelist ${DOWNLOADS}
 whitelist ${HOME}/Games
 whitelist ${HOME}/.cache/lutris
 whitelist ${HOME}/.cache/winetricks
@@ -66,8 +66,8 @@ protocol unix,inet,inet6,netlink
 seccomp
 shell none
 
-# uncomment the following line if you do not need controller support
-# private-dev
+# Add the next line to your lutris.local if you do not need controller support.
+#private-dev
 private-tmp
 
 dbus-user none

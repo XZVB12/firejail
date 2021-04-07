@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -41,7 +41,7 @@ int check_namespace_virt(void) {
 	EUID_ASSERT();
 
 	// check container environment variable
-	char *str = getenv("container");
+	const char *str = env_get("container");
 	if (str && is_container(str))
 		return 1;
 
@@ -168,29 +168,17 @@ void run_no_sandbox(int argc, char **argv) {
 		errExit("setresuid");
 
 	// process limited subset of options
+	// and find first non option arg:
+	//	- first argument not starting with --,
+	//	- whatever follows after -c (example: firejail -c ls)
+	int prog_index = 0;
 	int i;
-	for (i = 0; i < argc; i++) {
+	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--debug") == 0)
 			arg_debug = 1;
 		else if (strncmp(argv[i], "--shell=", 8) == 0)
-			fwarning("shell-related command line options are disregarded - using SHELL environment variable\n");
-	}
-
-	// use $SHELL to get shell used in sandbox, guess shell otherwise
-	cfg.shell = guess_shell();
-	if (!cfg.shell) {
-		fprintf(stderr, "Error: unable to guess your shell, please set SHELL environment variable\n");
-		exit(1);
-	}
-	else if (arg_debug)
-		printf("Selecting %s as shell\n", cfg.shell);
-
-	int prog_index = 0;
-	// find first non option arg:
-	//	- first argument not starting with --,
-	//	- whatever follows after -c (example: firejail -c ls)
-	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-c") == 0) {
+			fwarning("shell-related command line options are disregarded\n");
+		else if (strcmp(argv[i], "-c") == 0) {
 			prog_index = i + 1;
 			if (prog_index == argc) {
 				fprintf(stderr, "Error: option -c requires an argument\n");
@@ -199,35 +187,35 @@ void run_no_sandbox(int argc, char **argv) {
 			break;
 		}
 		// check first argument not starting with --
-		if (strncmp(argv[i],"--",2) != 0) {
+		else if (strncmp(argv[i],"--",2) != 0) {
 			prog_index = i;
 			break;
 		}
 	}
 
-// if shell is /usr/bin/firejail, replace it with /bin/bash
-//	if (strcmp(cfg.shell, PATH_FIREJAIL) == 0) {
-//		cfg.shell = "/bin/bash";
-//		prog_index = 0;
-//	}
-
 	if (prog_index == 0) {
-		assert(cfg.command_line == NULL); // runs cfg.shell
+		// got no command, require a shell and try to execute it
+		cfg.shell = guess_shell();
+		if (!cfg.shell) {
+			fprintf(stderr, "Error: unable to guess your shell, please set SHELL environment variable\n");
+			exit(1);
+		}
+
+		assert(cfg.command_line == NULL);
 		cfg.window_title = cfg.shell;
 	} else {
+		// this sandbox might not allow execution of a shell
+		// force --shell=none in order to not break firecfg symbolic links
+		arg_shell_none = 1;
+
 		build_cmdline(&cfg.command_line, &cfg.window_title, argc, argv, prog_index);
 	}
 
+	fwarning("an existing sandbox was detected. "
+		"%s will run without any additional sandboxing features\n", prog_index ? argv[prog_index] : cfg.shell);
+
 	cfg.original_argv = argv;
 	cfg.original_program_index = prog_index;
-
-	char *command;
-	if (prog_index == 0)
-		command = cfg.shell;
-	else
-		command = argv[prog_index];
-	fwarning("an existing sandbox was detected. "
-		"%s will run without any additional sandboxing features\n", command);
 
 	arg_quiet = 1;
 

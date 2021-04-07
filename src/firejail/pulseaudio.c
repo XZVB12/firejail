@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -42,7 +42,7 @@ void pulseaudio_disable(void) {
 
 
 	// blacklist pulseaudio socket in XDG_RUNTIME_DIR
-	char *name = getenv("XDG_RUNTIME_DIR");
+	const char *name = env_get("XDG_RUNTIME_DIR");
 	if (name)
 		disable_file_path(name, "pulse/native");
 
@@ -76,9 +76,10 @@ void pulseaudio_disable(void) {
 }
 
 static void pulseaudio_fallback(const char *path) {
+	assert(path);
+
 	fmessage("Cannot mount tmpfs on %s/.config/pulse\n", cfg.homedir);
-	if (setenv("PULSE_CLIENTCONFIG", path, 1) < 0)
-		errExit("setenv");
+	env_store_name_val("PULSE_CLIENTCONFIG", path, SETENV);
 }
 
 // disable shm in pulseaudio (issue #69)
@@ -173,8 +174,7 @@ void pulseaudio_init(void) {
 	char *p;
 	if (asprintf(&p, "%s/client.conf", homeusercfg) == -1)
 		errExit("asprintf");
-	if (setenv("PULSE_CLIENTCONFIG", p, 1) < 0)
-		errExit("setenv");
+	env_store_name_val("PULSE_CLIENTCONFIG", p, SETENV);
 	fs_logger2("create", p);
 	free(p);
 

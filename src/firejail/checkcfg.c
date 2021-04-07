@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -215,10 +215,8 @@ int checkcfg(int val) {
 			}
 
 			// file copy limit
-			else if (strncmp(ptr, "file-copy-limit ", 16) == 0) {
-				if (setenv("FIREJAIL_FILE_COPY_LIMIT", ptr + 16, 1) == -1)
-					errExit("setenv");
-			}
+			else if (strncmp(ptr, "file-copy-limit ", 16) == 0)
+				env_store_name_val("FIREJAIL_FILE_COPY_LIMIT", ptr + 16, SETENV);
 
 			// timeout for join option
 			else if (strncmp(ptr, "join-timeout ", 13) == 0)
@@ -271,6 +269,14 @@ errout:
 
 void print_compiletime_support(void) {
 	printf("Compile time support:\n");
+	printf("\t- Always force nonewprivs support is %s\n",
+#ifdef HAVE_FORCE_NONEWPRIVS
+		"enabled"
+#else
+		"disabled"
+#endif
+		);
+
 	printf("\t- AppArmor support is %s\n",
 #ifdef HAVE_APPARMOR
 		"enabled"
@@ -335,6 +341,13 @@ void print_compiletime_support(void) {
 #endif
 		);
 
+	printf("\t- output logging is %s\n",
+#ifdef HAVE_OUTPUT
+		"enabled"
+#else
+		"disabled"
+#endif
+		);
 	printf("\t- overlayfs support is %s\n",
 #ifdef HAVE_OVERLAYFS
 		"enabled"
@@ -382,4 +395,6 @@ void print_compiletime_support(void) {
 		"disabled"
 #endif
 		);
+
+
 }

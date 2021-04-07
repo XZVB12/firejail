@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -161,6 +161,21 @@ static CapsEntry capslist[] = {
 	{"audit_read", CAP_AUDIT_READ },
 #else
 	{"audit_read", 37 },
+#endif
+#ifdef CAP_PERFMON
+	{"perfmon", CAP_PERFMON },
+#else
+	{"perfmon", 38 },
+#endif
+#ifdef CAP_BPF
+	{"bpf", CAP_BPF },
+#else
+	{"bpf", 39 },
+#endif
+#ifdef CAP_CHECKPOINT_RESTORE
+	{"checkpoint_restore", CAP_CHECKPOINT_RESTORE },
+#else
+	{"checkpoint_restore", 40 },
 #endif
 
 //

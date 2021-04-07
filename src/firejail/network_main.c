@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -120,7 +120,7 @@ void net_configure_sandbox_ip(Bridge *br) {
 		// check network range
 		char *rv = in_netrange(br->ipsandbox, br->ip, br->mask);
 		if (rv) {
-			fprintf(stderr, "%s", rv);
+			fprintf(stderr, "%s\n", rv);
 			exit(1);
 		}
 		// send an ARP request and check if there is anybody on this IP address

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -36,7 +36,7 @@ static int __attribute__((noreturn)) sbox_do_exec_v(unsigned filtermask, char * 
 	int env_index = 0;
 	char *new_environment[256] = { NULL };
 	// preserve firejail-specific env vars
-	char *cl = getenv("FIREJAIL_FILE_COPY_LIMIT");
+	const char *cl = env_get("FIREJAIL_FILE_COPY_LIMIT");
 	if (cl) {
 		if (asprintf(&new_environment[env_index++], "FIREJAIL_FILE_COPY_LIMIT=%s", cl) == -1)
 			errExit("asprintf");
@@ -203,15 +203,16 @@ static int __attribute__((noreturn)) sbox_do_exec_v(unsigned filtermask, char * 
 		}
 	}
 
-	if (filtermask & SBOX_ROOT) {
+	if (filtermask & SBOX_USER)
+		drop_privs(1);
+	else if (filtermask & SBOX_ROOT) {
 		// elevate privileges in order to get grsecurity working
 		if (setreuid(0, 0))
 			errExit("setreuid");
 		if (setregid(0, 0))
 			errExit("setregid");
 	}
-	else if (filtermask & SBOX_USER)
-		drop_privs(1);
+	else assert(0);
 
 	if (arg[0]) { // get rid of scan-build warning
 		int fd = open(arg[0], O_PATH | O_CLOEXEC);

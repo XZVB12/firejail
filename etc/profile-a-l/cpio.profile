@@ -10,4 +10,5 @@ include globals.local
 noblacklist /sbin
 noblacklist /usr/sbin
 
-include archiver-common.inc
+# Redirect
+include archiver-common.profile

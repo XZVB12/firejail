@@ -7,4 +7,5 @@ include xzdec.local
 # Persistent global definitions
 include globals.local
 
-include archiver-common.inc
+# Redirect
+include archiver-common.profile

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef HAVE_OUTPUT
 void check_output(int argc, char **argv) {
 	EUID_ASSERT();
 
@@ -95,6 +96,9 @@ void check_output(int argc, char **argv) {
 			close(pipefd[0]);
 		}
 
+		// restore some environment variables
+		env_apply_whitelist_sbox();
+
 		char *args[3];
 		args[0] = LIBDIR "/firejail/ftee";
 		args[1] = outfile;
@@ -137,8 +141,13 @@ void check_output(int argc, char **argv) {
 		}
 		args[j++] = argv[i];
 	}
+
+	// restore original environment variables
+	env_apply_all();
+
 	execvp(args[0], args);
 
 	perror("execvp");
 	exit(1);
 }
+#endif

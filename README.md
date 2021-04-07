@@ -24,19 +24,19 @@ implemented directly in Linux kernel and available on any Linux computer.
 <td>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=7RMz7tePA98
 " target="_blank"><img src="http://img.youtube.com/vi/7RMz7tePA98/0.jpg"
-alt="Firejail Intro video" width="240" height="180" border="10" /><br/>Firejail Intro</a>
+alt="Firejail Introduction" width="240" height="180" border="10" /><br/>Firejail Intro</a>
 </td>
 
 <td>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=J1ZsXrpAgBU
 " target="_blank"><img src="http://img.youtube.com/vi/J1ZsXrpAgBU/0.jpg"
-alt="Firejail Intro video" width="240" height="180" border="10" /><br/>Firejail Demo</a>
+alt="Firejail Demo" width="240" height="180" border="10" /><br/>Firejail Demo</a>
 </td>
 
 <td>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=EyEz65RYfw4
 " target="_blank"><img src="http://img.youtube.com/vi/EyEz65RYfw4/0.jpg"
-alt="Firejail Intro video" width="240" height="180" border="10" /><br/>Debian Install</a>
+alt="Debian Install" width="240" height="180" border="10" /><br/>Debian Install</a>
 </td>
 
 
@@ -44,13 +44,19 @@ alt="Firejail Intro video" width="240" height="180" border="10" /><br/>Debian In
 <td>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Uy2ZTHc4s0w
 " target="_blank"><img src="http://img.youtube.com/vi/Uy2ZTHc4s0w/0.jpg"
-alt="Firejail Intro video" width="240" height="180" border="10" /><br/>Arch Linux Install</a>
+alt="Arch Linux Install" width="240" height="180" border="10" /><br/>Arch Linux Install</a>
 
 </td>
 <td>
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=xuMxRx0zSfQ
 " target="_blank"><img src="http://img.youtube.com/vi/xuMxRx0zSfQ/0.jpg"
-alt="Firejail Intro video" width="240" height="180" border="10" /><br/>Disable Network Access</a>
+alt="Disable Network Access" width="240" height="180" border="10" /><br/>Disable Network Access</a>
+
+</td>
+<td>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=N-Mso2bSr3o
+" target="_blank"><img src="http://img.youtube.com/vi/N-Mso2bSr3o/0.jpg"
+alt="Firejail Security Deep Dive" width="240" height="180" border="10" /><br/>Firejail Security Deep Dive</a>
 
 </td>
 </tr></table>
@@ -69,10 +75,42 @@ Wiki: https://github.com/netblue30/firejail/wiki
 
 GitLab-CI status: https://gitlab.com/Firejail/firejail_ci/pipelines/
 
+Video Channel: https://www.youtube.com/channel/UCi5u-syndQYyOeV4NZ04hNA
+
+Backup Video Channel: https://www.bitchute.com/profile/JSBsA1aoQVfW/
 
 ## Security vulnerabilities
 
 We take security bugs very seriously. If you believe you have found one, please report it by emailing us at netblue30@protonmail.com
+
+`````
+Security Adivsory - Feb 8, 2021
+
+Summary: A vulnerability resulting in root privilege escalation was discovered in
+Firejail's OverlayFS code,
+
+Versions affected: Firejail software versions starting with 0.9.30.
+Long Term Support (LTS) Firejail branch is not affected by this bug.
+
+Workaround: Disable overlayfs feature at runtime.
+In a text editor open /etc/firejail/firejail.config file, and set "overlayfs" entry to "no".
+
+      $ grep overlayfs /etc/firejail/firejail.config
+      # Enable or disable overlayfs features, default enabled.
+      overlayfs no
+
+Fix: The bug is fixed in Firejail version 0.9.64.4
+
+GitHub commit: (file configure.ac)
+https://github.com/netblue30/firejail/commit/97d8a03cad19501f017587cc4e47d8418273834b
+
+Credit:  Security researcher Roman Fiedler analyzed the code and discovered the vulnerability.
+Functional PoC exploit code was provided to Firejail development team.
+A description of the problem is here on Roman's blog:
+
+https://unparalleled.eu/publications/2021/advisory-unpar-2021-0.txt
+https://unparalleled.eu/blog/2021/20210208-rigged-race-against-firejail-for-local-root/
+`````
 
 ## Installing
 
@@ -160,7 +198,100 @@ We also keep a list of profile fixes for previous released versions in [etc-fixe
 Milestone page: https://github.com/netblue30/firejail/milestone/1
 Release discussion: https://github.com/netblue30/firejail/issues/3696
 
+### jailtest
+`````
+JAILTEST(1)                    JAILTEST man page                   JAILTEST(1)
 
+NAME
+       jailtest - Simple utility program to test running sandboxes
+
+SYNOPSIS
+       sudo jailtest [OPTIONS] [directory]
+
+DESCRIPTION
+       WORK IN PROGRESS!  jailtest attaches itself to all sandboxes started by
+       the user and performs some basic tests on the sandbox filesystem:
+
+       1. Virtual directories
+              jailtest extracts a list with the main virtual  directories  in‐
+              stalled by the sandbox.  These directories are build by firejail
+              at startup using --private* and --whitelist commands.
+
+       2. Noexec test
+              jailtest inserts executable programs  in  /home/username,  /tmp,
+              and  /var/tmp  directories and tries to run them form inside the
+              sandbox, thus testing if the directory is executable or not.
+
+       3. Read access test
+              jailtest creates test files in the directories specified by  the
+              user and tries to read them from inside the sandbox.
+
+       4. AppArmor test
+
+       5. Seccomp test
+
+       The program is started as root using sudo.
+
+OPTIONS
+       --debug
+              Print debug messages
+
+       -?, --help
+              Print options end exit.
+
+       --version
+              Print program version and exit.
+
+       [directory]
+              One  or  more  directories in user home to test for read access.
+              ~/.ssh and ~/.gnupg are tested by default.
+
+OUTPUT
+       For each sandbox detected we print the following line:
+
+            PID:USER:Sandbox Name:Command
+
+       It is followed by relevant sandbox information, such as the virtual di‐
+       rectories and various warnings.
+
+EXAMPLE
+       $ sudo jailtest
+       2014:netblue::firejail /usr/bin/gimp
+          Virtual dirs: /tmp, /var/tmp, /dev, /usr/share,
+          Warning: I can run programs in /home/netblue
+
+       2055:netblue::firejail /usr/bin/ssh -X netblue@x.y.z.net
+          Virtual dirs: /var/tmp, /dev, /usr/share, /run/user/1000,
+          Warning: I can read ~/.ssh
+
+       2186:netblue:libreoffice:firejail --appimage /opt/LibreOffice-fresh.ap‐
+       pimage
+          Virtual dirs: /tmp, /var/tmp, /dev,
+
+       26090:netblue::/usr/bin/firejail /opt/firefox/firefox
+          Virtual dirs: /home/netblue, /tmp, /var/tmp, /dev, /etc, /usr/share,
+                        /run/user/1000,
+
+       26160:netblue:tor:firejail --private=~/tor-browser_en-US ./start-tor
+          Warning: AppArmor not enabled
+          Virtual dirs: /home/netblue, /tmp, /var/tmp, /dev, /etc, /bin,
+                        /usr/share, /run/user/1000,
+          Warning: I can run programs in /home/netblue
+
+LICENSE
+       This program is free software; you can redistribute it and/or modify it
+       under  the  terms of the GNU General Public License as published by the
+       Free Software Foundation; either version 2 of the License, or (at  your
+       option) any later version.
+
+       Homepage: https://firejail.wordpress.com
+
+SEE ALSO
+       firejail(1),  firemon(1), firecfg(1), firejail-profile(5), firejail-lo‐
+       gin(5), firejail-users(5),
+
+0.9.65                             Feb 2021                        JAILTEST(1)
+`````
 
 ### Profile Statistics
 
@@ -172,31 +303,34 @@ $ ./profstats *.profile
 Warning: multiple caps in transmission-daemon.profile
 
 Stats:
-    profiles			1064
-    include local profile	1064   (include profile-name.local)
-    include globals		1064   (include globals.local)
-    blacklist ~/.ssh		959   (include disable-common.inc)
-    seccomp			975
-    capabilities		1063
-    noexec			944   (include disable-exec.inc)
-    memory-deny-write-execute	229
-    apparmor			605
-    private-bin			564
-    private-dev			932
-    private-etc			462
-    private-tmp			823
-    whitelist home directory	502
-    whitelist var		744   (include whitelist-var-common.inc)
-    whitelist run/user		461   (include whitelist-runuser-common.inc
+    profiles			1077
+    include local profile	1077   (include profile-name.local)
+    include globals		1077   (include globals.local)
+    blacklist ~/.ssh		971   (include disable-common.inc)
+    seccomp			988
+    capabilities		1076
+    noexec			960   (include disable-exec.inc)
+    memory-deny-write-execute	231
+    apparmor			621
+    private-bin			571
+    private-dev			949
+    private-etc			470
+    private-tmp			835
+    whitelist home directory	508
+    whitelist var		758   (include whitelist-var-common.inc)
+    whitelist run/user		539   (include whitelist-runuser-common.inc
 					or blacklist ${RUNUSER})
-    whitelist usr/share		451   (include whitelist-usr-share-common.inc
-    net none			345
-    dbus-user none 		564
-    dbus-user filter 		85
-    dbus-system none 		696
+    whitelist usr/share		526   (include whitelist-usr-share-common.inc
+    net none			354
+    dbus-user none 		573
+    dbus-user filter 		86
+    dbus-system none 		706
     dbus-system filter 		7
 ```
 
 ### New profiles:
 
-vmware-view
+vmware-view, display-im6.q16, ipcalc, ipcalc-ng, ebook-convert, ebook-edit, ebook-meta, ebook-polish, lzop,
+avidemux, calligragemini, vmware-player, vmware-workstation, gget, com.github.phase1geo.minder, nextcloud-desktop,
+pcsxr, PPSSPPSDL, openmw, openmw-launcher, jami-gnome, PCSX2, bcompare, b2sum, cksum, md5sum, sha1sum, sha224sum,
+sha256sum, sha384sum, sha512sum, sum

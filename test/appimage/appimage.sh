@@ -1,6 +1,6 @@
 #!/bin/bash
 # This file is part of Firejail project
-# Copyright (C) 2014-2020 Firejail Authors
+# Copyright (C) 2014-2021 Firejail Authors
 # License GPL v2
 
 export MALLOC_CHECK_=3
@@ -20,4 +20,4 @@ echo "TESTING: AppImage argsv1 (test/appimage/appimage-args.exp)"
 ./appimage-args.exp
 
 echo "TESTING: AppImage trace (test/appimage/appimage-trace.exp)"
-./appimage-args.exp
+./appimage-trace.exp

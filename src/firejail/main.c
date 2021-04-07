@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -130,8 +130,6 @@ int arg_keep_var_tmp = 0;                       // don't overwrite /var/tmp
 int arg_writable_run_user = 0;			// writable /run/user
 int arg_writable_var_log = 0;		// writable /var/log
 int arg_appimage = 0;				// appimage
-int arg_audit = 0;				// audit
-char *arg_audit_prog = NULL;			// audit
 int arg_apparmor = 0;				// apparmor
 int arg_allow_debuggers = 0;			// allow debuggers
 int arg_x11_block = 0;				// block X11
@@ -297,7 +295,7 @@ static void check_network(Bridge *br) {
 	else if (br->ipsandbox) { // for macvlan check network range
 		char *rv = in_netrange(br->ipsandbox, br->ip, br->mask);
 		if (rv) {
-			fprintf(stderr, "%s", rv);
+			fprintf(stderr, "%s\n", rv);
 			exit(1);
 		}
 	}
@@ -861,19 +859,20 @@ static void run_cmd_and_exit(int i, int argc, char **argv) {
 }
 
 char *guess_shell(void) {
-	char *shell = NULL;
+	const char *shell;
+	char *retval;
 	struct stat s;
 
-	shell = getenv("SHELL");
+	shell = env_get("SHELL");
 	if (shell) {
 		invalid_filename(shell, 0); // no globbing
 		if (!is_dir(shell) && strstr(shell, "..") == NULL && stat(shell, &s) == 0 && access(shell, X_OK) == 0 &&
 		    strcmp(shell, PATH_FIREJAIL) != 0)
-			return shell;
+			goto found;
 	}
 
 	// shells in order of preference
-	char *shells[] = {"/bin/bash", "/bin/csh", "/usr/bin/zsh", "/bin/sh", "/bin/ash", NULL };
+	static const char * const shells[] = {"/bin/bash", "/bin/csh", "/usr/bin/zsh", "/bin/sh", "/bin/ash", NULL };
 
 	int i = 0;
 	while (shells[i] != NULL) {
@@ -884,8 +883,11 @@ char *guess_shell(void) {
 		}
 		i++;
 	}
-
-	return shell;
+ found:
+	retval = strdup(shell);
+	if (!retval)
+		errExit("strdup");
+	return retval;
 }
 
 // return argument index
@@ -926,8 +928,12 @@ static void run_builder(int argc, char **argv) {
 	if (setresuid(-1, getuid(), getuid()) != 0)
 		errExit("setresuid");
 
+	assert(env_get("LD_PRELOAD") == NULL);
 	assert(getenv("LD_PRELOAD") == NULL);
 	umask(orig_umask);
+
+	// restore some environment variables
+	env_apply_whitelist_sbox();
 
 	argv[0] = LIBDIR "/firejail/fbuilder";
 	execvp(argv[0], argv);
@@ -994,6 +1000,16 @@ int main(int argc, char **argv, char **envp) {
 		exit(1);
 	}
 
+	// Stash environment variables
+	for (i = 0, ptr = envp; ptr && *ptr && i < MAX_ENVS; i++, ptr++)
+		env_store(*ptr, SETENV);
+
+	// sanity check for environment variables
+	if (i >= MAX_ENVS) {
+		fprintf(stderr, "Error: too many environment variables\n");
+		exit(1);
+	}
+
 	// sanity check for arguments
 	for (i = 0; i < argc; i++) {
 		if (*argv[i] == 0) {
@@ -1004,30 +1020,17 @@ int main(int argc, char **argv, char **envp) {
 			fprintf(stderr, "Error: too long arguments\n");
 			exit(1);
 		}
-		// Also remove requested environment variables
-		// entirely to avoid tripping the length check below
-		if (strncmp(argv[i], "--rmenv=", 8) == 0)
-			unsetenv(argv[i] + 8);
 	}
 
-	// sanity check for environment variables
-	for (i = 0, ptr = envp; ptr && *ptr && i < MAX_ENVS; i++, ptr++) {
-		if (strlen(*ptr) >= MAX_ENV_LEN) {
-			fprintf(stderr, "Error: too long environment variables, please use --rmenv\n");
-			exit(1);
-		}
-	}
-	if (i >= MAX_ENVS) {
-		fprintf(stderr, "Error: too many environment variables, please use --rmenv\n");
-		exit(1);
-	}
+	// Reapply a minimal set of environment variables
+	env_apply_whitelist();
 
 	// check if the user is allowed to use firejail
 	init_cfg(argc, argv);
 
 	// get starting timestamp, process --quiet
 	timetrace_start();
-	char *env_quiet = getenv("FIREJAIL_QUIET");
+	const char *env_quiet = env_get("FIREJAIL_QUIET");
 	if (check_arg(argc, argv, "--quiet", 1) || (env_quiet && strcmp(env_quiet, "yes") == 0))
 		arg_quiet = 1;
 
@@ -1037,7 +1040,7 @@ int main(int argc, char **argv, char **envp) {
 
 	// build /run/firejail directory structure
 	preproc_build_firejail_dir();
-	char *container_name = getenv("container");
+	const char *container_name = env_get("container");
 	if (!container_name || strcmp(container_name, "firejail")) {
 		lockfd_directory = open(RUN_DIRECTORY_LOCK_FILE, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 		if (lockfd_directory != -1) {
@@ -1170,6 +1173,9 @@ int main(int argc, char **argv, char **envp) {
 
 							drop_privs(1);
 							umask(orig_umask);
+
+							// restore original environment variables
+							env_apply_all();
 							int rv = system(argv[2]);
 							exit(rv);
 						}
@@ -1225,10 +1231,12 @@ int main(int argc, char **argv, char **envp) {
 #endif
 		}
 	}
+#ifdef HAVE_OUTPUT
 	else {
 		// check --output option and execute it;
 		check_output(argc, argv); // the function will not return if --output or --output-stderr option was found
 	}
+#endif
 	EUID_ASSERT();
 
 	// check for force-nonewprivs in /etc/firejail/firejail.config file
@@ -1277,15 +1285,10 @@ int main(int argc, char **argv, char **envp) {
 #endif
 		else if (strncmp(argv[i], "--protocol=", 11) == 0) {
 			if (checkcfg(CFG_SECCOMP)) {
-				if (cfg.protocol) {
-					fwarning("more than one protocol list is present, \"%s\" will be installed\n", cfg.protocol);
-				}
-				else {
-					// store list
-					cfg.protocol = strdup(argv[i] + 11);
-					if (!cfg.protocol)
-						errExit("strdup");
-				}
+				const char *add = argv[i] + 11;
+				profile_list_augment(&cfg.protocol, add);
+				if (arg_debug)
+					fprintf(stderr, "[option] combined protocol list: \"%s\"\n", cfg.protocol);
 			}
 			else
 				exit_err_feature("seccomp");
@@ -1581,7 +1584,26 @@ int main(int argc, char **argv, char **envp) {
 			profile_add(line);
 		}
 #endif
-
+		else if (strncmp(argv[i], "--mkdir=", 8) == 0) {
+			char *line;
+			if (asprintf(&line, "mkdir %s", argv[i] + 8) == -1)
+				errExit("asprintf");
+			/* Note: Applied both immediately in profile_check_line()
+			 *       and later on via fs_blacklist().
+			 */
+			profile_check_line(line, 0, NULL);
+			profile_add(line);
+		}
+		else if (strncmp(argv[i], "--mkfile=", 9) == 0) {
+			char *line;
+			if (asprintf(&line, "mkfile %s", argv[i] + 9) == -1)
+				errExit("asprintf");
+			/* Note: Applied both immediately in profile_check_line()
+			 *       and later on via fs_blacklist().
+			 */
+			profile_check_line(line, 0, NULL);
+			profile_add(line);
+		}
 		else if (strncmp(argv[i], "--read-only=", 12) == 0) {
 			char *line;
 			if (asprintf(&line, "read-only %s", argv[i] + 12) == -1)
@@ -2584,28 +2606,6 @@ int main(int argc, char **argv, char **envp) {
 		//*************************************
 		else if (strncmp(argv[i], "--timeout=", 10) == 0)
 			cfg.timeout = extract_timeout(argv[i] + 10);
-		else if (strcmp(argv[i], "--audit") == 0) {
-			arg_audit_prog = LIBDIR "/firejail/faudit";
-			profile_add_ignore("shell none");
-			arg_audit = 1;
-		}
-		else if (strncmp(argv[i], "--audit=", 8) == 0) {
-			if (strlen(argv[i] + 8) == 0) {
-				fprintf(stderr, "Error: invalid audit program\n");
-				exit(1);
-			}
-			arg_audit_prog = strdup(argv[i] + 8);
-			if (!arg_audit_prog)
-				errExit("strdup");
-
-			struct stat s;
-			if (stat(arg_audit_prog, &s) != 0) {
-				fprintf(stderr, "Error: cannot find the audit program %s\n", arg_audit_prog);
-				exit(1);
-			}
-			profile_add_ignore("shell none");
-			arg_audit = 1;
-		}
 		else if (strcmp(argv[i], "--appimage") == 0)
 			arg_appimage = 1;
 		else if (strcmp(argv[i], "--shell=none") == 0) {
@@ -2790,7 +2790,7 @@ int main(int argc, char **argv, char **envp) {
 		if (arg_debug)
 			printf("Configuring appimage environment\n");
 		appimage_set(cfg.command_name);
-		build_appimage_cmdline(&cfg.command_line, &cfg.window_title, argc, argv, prog_index, cfg.command_line);
+		build_appimage_cmdline(&cfg.command_line, &cfg.window_title, argc, argv, prog_index);
 	}
 	else {
 		build_cmdline(&cfg.command_line, &cfg.window_title, argc, argv, prog_index);

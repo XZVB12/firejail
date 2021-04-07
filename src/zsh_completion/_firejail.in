@@ -1,0 +1,283 @@
+#compdef firejail
+
+# Documentation: man 1 zshcompsys
+# HowTo: https://github.com/zsh-users/zsh-completions/blob/master/zsh-completions-howto.org
+
+_all_firejails() {
+    local -a _all_firejails_list
+    for jail in ${(f)"$(_call_program modules_tag "firejail --list 2> /dev/null | cut -d: -f1")"}; do
+        _all_firejails_list+=${jail%% *}
+    done
+    _describe 'firejails list' _all_firejails_list
+}
+
+_all_cpus() {
+    _cpu_count=$(getconf _NPROCESSORS_ONLN)
+    for i in {0..$((_cpu_count-1))} ; do
+        print $i
+    done
+}
+
+_profiles() {
+    print $1/*.profile | sed -E "s;$1/;;g;s;\.profile;;g;"
+}
+_profiles_with_ext() {
+    print $1/*.profile
+}
+
+_all_profiles() {
+    _values 'profiles' $(_profiles _SYSCONFDIR_/firejail) $(_profiles $HOME/.config/firejail) $(_profiles_with_ext .)
+}
+
+_session_bus_names() {
+    _values names $(busctl --user list --no-legend --activatable | cut -d" " -f1)
+    # Alternatives to hack on for non-systemd systems:
+    #  dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply=literal /org/freedesktop/DBus org.freedesktop.DBus.ListNames
+    #  ls /usr/share/dbus-1/services | xargs -I FILENAME basename FILENAME .service
+}
+
+_system_bus_names() {
+    _values names $(busctl --system list --no-legend --activatable | cut -d" " -f1)
+}
+
+_caps() {
+    _values -s "," caps $(firejail --debug-caps | awk '/[0-9]+\s*- /{print $3}')
+}
+
+_firejail_args=(
+    '*::arguments:_normal'
+
+    '--appimage[sandbox an AppImage application]'
+    '--build[build a whitelisted profile for the application and print it on stdout]'
+    '--build=-[build a whitelisted profile for the application and save it]: :_files'
+    # Ignore that you can do -? too as it's the only short option
+    '--help[this help screen]'
+    '--join=-[join the sandbox name|pid]: :_all_firejails'
+    '--join-filesystem=-[join the mount namespace name|pid]: :_all_firejails'
+    '--list[list all sandboxes]'
+    '(--profile)--noprofile[do not use a security profile]'
+    '(--noprofile)--profile=-[use a custom profile]: :_all_profiles'
+    '--shutdown=-[shutdown the sandbox identified by name|pid]: :_all_firejails'
+    '--top[monitor the most CPU-intensive sandboxes]'
+    '--tree[print a tree of all sandboxed processes]'
+    '--version[print program version and exit]'
+
+    '--debug[print sandbox debug messages]'
+    '--debug-blacklists[debug blacklisting]'
+    '--debug-caps[print all recognized capabilities]'
+    '--debug-errnos[print all recognized error numbers]'
+    '--debug-private-lib[debug for --private-lib option]'
+    '--debug-protocols[print all recognized protocols]'
+    '--debug-syscalls[print all recognized system calls]'
+    '--debug-syscalls32[print all recognized 32 bit system calls]'
+    '--debug-whitelists[debug whitelisting]'
+
+    '--caps.print=-[print the caps filter name|pid]:firejail:_all_firejails'
+    '--cpu.print=-[print the cpus in use name|pid]: :_all_firejails'
+    '--fs.print=-[print the filesystem log name|pid]: :_all_firejails'
+    '--profile.print=-[print the name of profile file name|pid]: :_all_firejails'
+    '--protocol.print=-[print the protocol filter name|pid]: :_all_firejails'
+    '--seccomp.print=-[print the seccomp filter for the sandbox identified by name|pid]: :_all_firejails'
+
+    '--allow-debuggers[allow tools such as strace and gdb inside the sandbox]'
+    '--allusers[all user home directories are visible inside the sandbox]'
+    # Should be _files, a comma and files or files -/
+    '*--bind=-[mount-bind dirname1/filename1 on top of dirname2/filename2]: :(file1,file2 dir1,dir2)'
+    '*--blacklist=-[blacklist directory or file]: :_files'
+    '--caps[enable default Linux capabilities filter]'
+    '--caps.drop=all[drop all capabilities]'
+    '*--caps.drop=-[drop capabilities: all|cap1,cap2,...]: :_caps'
+    '*--caps.keep=-[keep capabilities: cap1,cap2,...]: :_caps'
+    '--cgroup=-[place the sandbox in the specified control group]: :'
+    '--cpu=-[set cpu affinity]: :->cpus'
+    "--deterministic-exit-code[always exit with first child's status code]"
+    '*--dns=-[set DNS server]: :'
+    '*--env=-[set environment variable]: :'
+    '--hostname=-[set sandbox hostname]: :'
+    '--hosts-file=-[use file as /etc/hosts]: :_files'
+    '*--ignore=-[ignore command in profile files]: :'
+    '--ipc-namespace[enable a new IPC namespace]'
+    '--join-or-start=-[join the sandbox or start a new one name|pid]: :_all_firejails'
+    '--keep-dev-shm[/dev/shm directory is untouched (even with --private-dev)]'
+    '--keep-var-tmp[/var/tmp directory is untouched]'
+    '--machine-id[preserve /etc/machine-id]'
+    '--memory-deny-write-execute[seccomp filter to block attempts to create memory mappings that are both writable and executable]'
+    '*--mkdir=-[create a directory]:'
+    '*--mkfile=-[create a file]:'
+    '--name=-[set sandbox name]: :'
+    '--net=none[enable a new, unconnected network namespace]'
+    # Sample values as I don't think
+    # many would enjoy getting a list from -20..20
+    '--nice=-[set nice value]: :(1 10 15 20)'
+    '--no3d[disable 3D hardware acceleration]'
+    '--noautopulse[disable automatic ~/.config/pulse init]'
+    '--noblacklist=-[disable blacklist for file or directory]: :_files'
+    '--nodbus[disable D-Bus access]'
+    '--nodvd[disable DVD and audio CD devices]'
+    '*--noexec=-[remount the file or directory noexec nosuid and nodev]: :_files'
+    '--nogroups[disable supplementary groups]'
+    '--nonewprivs[sets the NO_NEW_PRIVS prctl]'
+    '--nosound[disable sound system]'
+    '--nou2f[disable U2F devices]'
+    '--novideo[disable video devices]'
+    '--private[temporary home directory]'
+    '--private=-[use directory as user home]: :_files -/'
+    '--private-bin=-[build a new /bin in a temporary filesystem, and copy the programs in the list]: :_files -W /usr/bin'
+    '--private-cwd[do not inherit working directory inside jail]'
+    '--private-cwd=-[set working directory inside jail]: :_files -/'
+    '--private-dev[create a new /dev directory with a small number of common device files]'
+    '(--writable-etc)--private-etc=-[build a new /etc in a temporary filesystem, and copy the files and directories in the list]: :_files -W /etc'
+    '--private-opt=-[build a new /opt in a temporary filesystem]: :_files -W /opt'
+    '--private-srv=-[build a new /srv in a temporary filesystem]: :_files -W /srv'
+    '--private-tmp[mount a tmpfs on top of /tmp directory]'
+    '*--protocol=-[enable protocol filter]: :_values -s , protocols unix inet inet6 netlink packet bluetooth'
+    "--quiet[turn off Firejail's output.]"
+    '*--read-only=-[set directory or file read-only]: :_files'
+    '*--read-write=-[set directory or file read-write]: :_files'
+    "--rlimit-as=-[set the maximum size of the process's virtual memory (address space) in bytes]: :"
+    '--rlimit-cpu=-[set the maximum CPU time in seconds]: :'
+    '--rlimit-fsize=-[set the maximum file size that can be created by a process]: :'
+    '--rlimit-nofile=-[set the maximum number of files that can be opened by a process]: :'
+    '--rlimit-nproc=-[set the maximum number of processes that can be created for the real user ID of the calling process]: :'
+    '--rlimit-sigpending=-[set the maximum number of pending signals for a process]: :'
+    '*--rmenv=-[remove environment variable in the new sandbox]: :_values environment-variables $(env | cut -d= -f1)'
+    '--seccomp[enable seccomp filter and apply the default blacklist]: :'
+    '--seccomp=-[enable seccomp filter, blacklist the default syscall list and the syscalls specified by the command]: :->seccomp'
+    '--seccomp.block-secondary[build only the native architecture filters]'
+    '*--seccomp.drop=-[enable seccomp filter, and blacklist the syscalls specified by the command]: :->seccomp'
+    '*--seccomp.keep=-[enable seccomp filter, and whitelist the syscalls specified by the command]: :->seccomp'
+    '*--seccomp.32.drop=-[enable seccomp filter, and blacklist the 32 bit syscalls specified by the command]: :'
+    '*--seccomp.32.keep=-[enable seccomp filter, and whitelist the 32 bit syscalls specified by the command]: :'
+    # FIXME: Add errnos
+    '--seccomp-error-action=-[change error code, kill process or log the attempt]: :(kill log)'
+    '--shell=none[run the program directly without a user shell]'
+    '--shell=-[set default user shell]: :_values $(cat /etc/shells)'
+    '--timeout=-[kill the sandbox automatically after the time has elapsed]: :'
+    #'(--tracelog)--trace[trace open, access and connect system calls]'
+    '(--tracelog)--trace=-[trace open, access and connect system calls]: :_files'
+    '(--trace)--tracelog[add a syslog message for every access to files or directories blacklisted by the security profile]'
+    '(--private-etc)--writable-etc[/etc directory is mounted read-write]'
+    '--writable-run-user[allow access to /run/user/$UID/systemd and /run/user/$UID/gnupg]'
+    '--writable-var[/var directory is mounted read-write]'
+    '--writable-var-log[use the real /var/log directory, not a clone]'
+
+#ifdef HAVE_APPARMOR
+    '--apparmor[enable AppArmor confinement]'
+    '--apparmor.print=-[print apparmor status name|pid]:firejail:_all_firejails'
+#endif
+
+#ifdef HAVE_CHROOT
+    '(--noroot --overlay --overlay-named --overlay-tmpfs)--chroot=-[chroot into directory]: :_files -/'
+#endif
+
+#ifdef HAVE_DBUSPROXY
+    # FIXME: _xx_bus_names is actually wrong for --dbus-*.{broadcast,call}.
+    # We can steal some function from https://github.com/systemd/systemd/blob/main/shell-completion/zsh/_busctl
+    '--dbus-log=-[set DBus log file location]: :_files'
+    '--dbus-system=-[set system DBus access policy]: :(filter none)'
+    '--dbus-system.broadcast=-[allow signals on the system DBus according to rule]: :_system_bus_names'
+    '--dbus-system.call=-[allow calls on the system DBus according to rule]: :_system_bus_names'
+    '--dbus-system.own=-[allow ownership of name on the system DBus]: :_system_bus_names'
+    '--dbus-system.see=-[allow seeing name on the system DBus]: :_system_bus_names'
+    '--dbus-system.talk=-[allow talking to name on the system DBus]: :_system_bus_names'
+    '--dbus-user=-[set session DBus access policy or none]: :(filter none)'
+    '--dbus-user.broadcast=-[allow signals on the session DBus according to rule]: :_session_bus_names'
+    '--dbus-user.call=-[allow calls on the session DBus according to rule]: :_session_bus_names'
+    '--dbus-user.own=-[allow ownership of name on the session DBus]: :_session_bus_names'
+    '--dbus-user.see=-[allow seeing name on the session DBus]: :_session_bus_names'
+    '--dbus-user.talk=-[allow talking to name on the session DBus]: :_session_bus_names'
+#endif
+
+#ifdef HAVE_FILE_TRANSFER
+    '--cat=-[print content of file from sandbox container name|pid]: :_all_firejails'
+    '--get=-[get a file from sandbox container name|pid]: :_all_firejails'
+    # --put=name|pid src-filename dest-filename - put a file in sandbox container.
+    '--put=-[put a file in sandbox container]: :'
+    '--ls=-[list files in sandbox container name|pid]: :_all_firejails'
+#endif
+
+#ifdef HAVE_FIRETUNNEL
+    '--tunnel=-[connect the sandbox to a tunnel created by firetunnel utility]: :'
+#endif
+
+#ifdef HAVE_NETWORK
+    '--bandwidth=-[set bandwidth limits name|pid]: :_all_firejails'
+    '--defaultgw=[configure default gateway]: :'
+    '--dns.print=-[print DNS configuration name|pid]: :_all_firejails'
+    '--join-network=-[join the network namespace name|pid]: :_all_firejails'
+    '--mac=-[set interface MAC address]: :(xx\:xx\:xx\:xx\:xx\:xx)'
+    '--mtu=-[set interface MTU]: :'
+    '--net=-[enable network namespaces and connect to this bridge or Ethernet interface (or none to disable)]: :->net_or_none'
+    '--net.print=-[print network interface configuration name|pid]: :_all_firejails'
+    '--netfilter=-[enable firewall]: :'
+    '--netfilter.print=-[print the firewall name|pid]: :_all_firejails'
+    '--netfilter6=-[enable IPv6 firewall]: :'
+    '--netfilter6.print=-[print the IPv6 firewall name|pid]: :_all_firejails'
+    '--netmask=-[define a network mask when dealing with unconfigured parrent interfaces]: :'
+    '--netns=-[Run the program in a named, persistent network namespace]: :'
+    '--netstats[monitor network statistics]'
+    '--interface=-[move interface in sandbox]: :'
+    '--ip=-[set interface IP address none|dhcp|ADDRESS]: :(none dhcp)'
+    '--ip6=-[set interface IPv6 address or use dhcp via dhclient]: :(dhcp)'
+    '--iprange=-[configure an IP address in this range]: :'
+    '--scan[ARP-scan all the networks from inside a network namespace]'
+    '--veth-name=-[use this name for the interface connected to the bridge]: :'
+#endif
+
+#ifdef HAVE_OUTPUT
+    '--output=-[stdout logging and log rotation]: :_files'
+    '--output-stderr=-[stdout and stderr logging and log rotation]: :_files'
+#endif
+
+#ifdef HAVE_OVERLAYFS
+    '(--chroot --noroot)--overlay[mount a filesystem overlay on top of the current filesystem]'
+    '--overlay-clean[clean all overlays stored in $HOME/.firejail directory]'
+    '(--chroot --noroot)--overlay-named=-[mount a filesystem overlay on top of the current filesystem, and store it in name directory]: :_files -/'
+    '(--chroot --noroot)--overlay-tmpfs[mount a temporary filesystem overlay on top of the current filesystem]'
+#endif
+
+#ifdef HAVE_PRIVATE_HOME
+    '--private-home=-[build a new user home in a temporary filesystem, and copy the files and directories in the list in the new home]: :_files'
+#endif
+
+#ifdef HAVE_USERNS
+    '(--chroot --overlay --overlay-named --overlay-tmpfs)--noroot[install a user namespace with only the current user]'
+#endif
+
+#ifdef HAVE_USERTMPFS
+    '--private-cache[temporary ~/.cache directory]'
+    '*--tmpfs=-[mount a tmpfs filesystem on directory dirname]: :_files -/'
+#endif
+
+#ifdef HAVE_WHITELIST
+    '*--nowhitelist=-[disable whitelist for file or directory]: :_files'
+    '*--whitelist=-[whitelist directory or file]: :_files'
+#endif
+
+#ifdef HAVE_X11
+    '--x11[enable X11 sandboxing. The software checks first if Xpra is installed, then it checks if Xephyr is installed. If all fails, it will attempt to use X11 security extension]'
+    '--x11=-[disable or enable specific X11 server]: :(none xephyr xorg xpra xvfb)'
+    '--xephyr-screen=-[set screen size for --x11=xephyr]: :(WIDTHxHEIGHT)'
+#endif
+)
+
+
+_firejail() {
+    _arguments -S $_firejail_args
+    case "$state" in
+        cpus)
+            _values -s "," 'cpus' $(_all_cpus)
+            ;;
+        net_or_none)
+            local netdevs=($(ip link | awk '{print $2}' | grep '^.*:$' | tr -d ':'))
+            local net_and_none=(none $netdevs)
+            _values 'net' $net_and_none
+            ;;
+        seccomp)
+            # TODO: syscall groups
+            _values -s "," 'syscalls' $(firejail --debug-syscalls | cut -d" " -f2)
+            ;;
+    esac
+}
+
+# vim: ft=zsh sw=4 ts=4 et sts=4 ai

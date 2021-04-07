@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Firejail Authors
+ * Copyright (C) 2014-2021 Firejail Authors
  *
  * This file is part of firejail project
  *
@@ -46,7 +46,7 @@ static void mkdir_recursive(char *path) {
 	struct stat s;
 
 	if (chdir("/")) {
-		fprintf(stderr, "Error: can't chdir to /");
+		fprintf(stderr, "Error: can't chdir to /\n");
 		return;
 	}
 
@@ -63,7 +63,7 @@ static void mkdir_recursive(char *path) {
 			return;
 		}
 		if (chdir(subdir)) {
-			fprintf(stderr, "Error: can't chdir to %s", subdir);
+			fprintf(stderr, "Error: can't chdir to %s\n", subdir);
 			return;
 		}
 
